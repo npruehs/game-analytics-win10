@@ -51,3 +51,7 @@ If the event could be submitted, but any other errors occur, a Platform::Failure
 By default, this plugin will use the app package version as build id, and the Application Specific Hardware Identifier (ASHWID) as user id (see https://msdn.microsoft.com/en-us/library/windows/apps/jj553431 for details).
 
 You can change these at any time by the SetBuild and SetUserId methods.
+
+## Contributors
+
+While he's no direct contributor to this library, Jason Ericson helped me a great deal by providing a [C++ implementation for GameAnalytics](http://jasonericson.blogspot.dk/2013/03/game-analytics-in-c.html).
