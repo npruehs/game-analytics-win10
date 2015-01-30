@@ -17,7 +17,7 @@ Add GameAnalyticsInterface.h and GameAnalyticsInterface.cpp to your Windows Stor
 Include the header file and create a new instance of the GameAnalytics interface, specifying your game key and secret key. You can find your keys on the GameAnalytics dashboard, under your Game Settings.
 
 ```
-  #include "GameAnalytics\GameAnalyticsInterface.h"
+  #include "GameAnalyticsInterface.h"
 
   auto ga = std::make_shared<GameAnalytics::GameAnalyticsInterface>(L"your_game_key", L"your_secret_key");
 ```
@@ -32,11 +32,13 @@ Done! GameAnalytics is set up and ready for use. Sending a design event to the b
   ga->SendGameAnalyticsEvent(L"TestEvent:TestEventType");
 ```
 
-You can also send other events by specifying the event category explicitly:
+You can also send other events by specifying the event category explicitly. Currently, the REST API of GameAnalytics supports the categories "design" and "user":
 
 ```
-  ga->SendGameAnalyticsEvent(L"Purchase:RocketLauncher", L"business");
+  ga->SendGameAnalyticsEvent(L"TestEvent:TestEventType", L"user");
 ```
+
+Note that these method calls are asynchronous. Calling these methods won't cause your app to block.
 
 ## Error Handling
 
@@ -49,3 +51,7 @@ If the event could be submitted, but any other errors occur, a Platform::Failure
 By default, this plugin will use the app package version as build id, and the Application Specific Hardware Identifier (ASHWID) as user id (see https://msdn.microsoft.com/en-us/library/windows/apps/jj553431 for details).
 
 You can change these at any time by the SetBuild and SetUserId methods.
+
+## Contributors
+
+While he's no direct contributor to this library, Jason Ericson helped me a great deal by providing a [C++ implementation for GameAnalytics](http://jasonericson.blogspot.dk/2013/03/game-analytics-in-c.html).
