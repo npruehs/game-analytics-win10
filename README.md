@@ -1,16 +1,16 @@
-# Game Analytics for Windows Store Apps
+# Game Analytics for Windows Phone 8.1 & Windows Store Apps
 
-This is an open-source library for integrating the free GameAnalytics (http://www.gameanalytics.com/) backend in Windows Store apps. The library works out-of-the-box with the standard Visual Studio "Visual C++ Windows Store DirectX App" template.
+This is an open-source library for integrating the free GameAnalytics (http://www.gameanalytics.com/) backend in Windows Phone 8.1 and Windows Store apps. The library works out-of-the-box with the standard Visual Studio "Visual C++ Windows Phone DirectX App" and "Visual C++ Windows Store DirectX App" template.
 
 ## Integration
 
 ### Enable network access for your app
 
-Open the package.appxmanifest file, and add the Internet (Client) capability for your app.
+Open the package.appxmanifest file, and add the _Internet (Client & Server)_ capability for your Windows Phone 8.1 app, or the _Internet (Client)_ capability for your Windows Store app.
 
 ### Import source code
 
-Add GameAnalyticsInterface.h and GameAnalyticsInterface.cpp to your Windows Store app project.
+Add GameAnalyticsInterface.h and GameAnalyticsInterface.cpp to your app project.
 
 ### Enter your game keys
 
