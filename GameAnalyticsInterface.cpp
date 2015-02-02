@@ -126,8 +126,13 @@ std::wstring GameAnalyticsInterface::GenerateSessionId()
 
 	if (SUCCEEDED(hr))
 	{
-		Guid gd(result);
-		return std::wstring(gd.ToString()->Data());
+		// Generate new GUID.
+		Guid guid(result);
+		auto guidString = std::wstring(guid.ToString()->Data());
+
+		// Remove curly brackets.
+		auto sessionId = guidString.substr(1, guidString.length() - 2);
+		return sessionId;
 	}
 
 	throw Exception::CreateException(hr);
