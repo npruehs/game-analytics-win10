@@ -30,7 +30,7 @@ void GameAnalyticsInterface::SendDesignEvent(std::wstring eventId)
 {
 	// Build parameter map.
 	auto parameters = std::map<std::wstring, std::wstring>();
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"event_id", eventId));
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"design", parameters);
