@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <memory>
 
 namespace GameAnalytics
@@ -19,14 +20,7 @@ namespace GameAnalytics
 		// For example, an event_id could be: "PickedUpAmmo:Shotgun" (for design),
 		// "Purchase:RocketLauncher" (for business),
 		// or "Exception:NullReference" (for quality).
-		void SendGameAnalyticsEvent(std::wstring eventId);
-
-		// Sends the event with the specified id and category to the GameAnalytics backend.
-		// Can be sub-categorized by using ":" notation.
-		// For example, an event_id could be: "PickedUpAmmo:Shotgun" (for design),
-		// "Purchase:RocketLauncher" (for business),
-		// or "Exception:NullReference" (for quality).
-		void SendGameAnalyticsEvent(std::wstring eventId, std::wstring category);
+		void SendDesignEvent(std::wstring eventId);
 
 		// Sets the current version of the game being played. Defaults to the app package version.
 		void SetBuild(std::wstring build);
@@ -55,5 +49,8 @@ namespace GameAnalytics
 		
 		// Generates a new GUID for the current session.
 		std::wstring GenerateSessionId();
+
+		// Sends the event with the specified category and parameters to the GameAnalytics backend.
+		void SendGameAnalyticsEvent(std::wstring category, std::map<std::wstring, std::wstring> parameters);
 	};
 }

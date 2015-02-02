@@ -26,12 +26,17 @@ GameAnalyticsInterface::GameAnalyticsInterface(std::wstring gameKey, std::wstrin
 {
 }
 
-void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring eventId)
+void GameAnalyticsInterface::SendDesignEvent(std::wstring eventId)
 {
-	this->SendGameAnalyticsEvent(eventId, L"design");
+	// Build parameter map.
+	auto parameters = std::map<std::wstring, std::wstring>();
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"design", parameters);
 }
 
-void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring eventId, std::wstring category)
+void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring category, std::map<std::wstring, std::wstring> parameters)
 {
 	// Build event JSON.
 	// http://support.gameanalytics.com/hc/en-us/articles/200841486-General-event-structure
@@ -39,10 +44,18 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring eventId, std::w
 
 	std::wstring json = L"[";
 	json.append(L"{");
+
+	// Add header.
 	json.append(L"\"user_id\":\"" + this->userId + L"\",");
 	json.append(L"\"session_id\":\"" + this->sessionId + L"\",");
-	json.append(L"\"build\":\"" + this->build + L"\",");
-	json.append(L"\"event_id\":\"" + eventId + L"\"");
+	json.append(L"\"build\":\"" + this->build + L"\"");
+
+	// Add category specific parameters.
+	for (auto it = parameters.begin(); it != parameters.end(); ++it)
+	{
+		json.append(L",\"" + it->first + L"\":\"" + it->second + L"\"");
+	}
+
 	json.append(L"}");
 	json.append(L"]");
 
@@ -67,8 +80,8 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring eventId, std::w
 	message->Method = HttpMethod::Post;
 	message->Content = ref new HttpStringContent
 		(ref new Platform::String(json.c_str()),
-		 Windows::Storage::Streams::UnicodeEncoding::Utf8,
-		 ref new Platform::String(L"application/json"));
+		Windows::Storage::Streams::UnicodeEncoding::Utf8,
+		ref new Platform::String(L"application/json"));
 	message->Headers->TryAppendWithoutValidation(L"Authorization", digest);
 
 	auto response = ref new HttpResponseMessage();

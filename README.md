@@ -29,16 +29,10 @@ The interface will automatically generate a unique session id when instantiated.
 Done! GameAnalytics is set up and ready for use. Sending a design event to the backend is as easy as:
 
 ```
-  ga->SendGameAnalyticsEvent(L"TestEvent:TestEventType");
+  ga->SendDesignEvent(L"TestEvent:TestEventType");
 ```
 
-You can also send other events by specifying the event category explicitly. Currently, the REST API of GameAnalytics supports the categories "design" and "user":
-
-```
-  ga->SendGameAnalyticsEvent(L"TestEvent:TestEventType", L"user");
-```
-
-Note that these method calls are asynchronous. Calling these methods won't cause your app to block.
+Note that this method call is asynchronous. Calling this methods won't cause your app to block.
 
 ## Error Handling
 
