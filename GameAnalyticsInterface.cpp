@@ -16,7 +16,7 @@ using namespace Windows::Web::Http;
 using namespace Windows::Web::Http::Headers;
 
 
-GameAnalyticsInterface::GameAnalyticsInterface(std::wstring gameKey, std::wstring secretKey)
+GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey)
 	: httpClient(ref new Windows::Web::Http::HttpClient()),
 	gameKey(gameKey),
 	secretKey(secretKey),
@@ -26,7 +26,7 @@ GameAnalyticsInterface::GameAnalyticsInterface(std::wstring gameKey, std::wstrin
 {
 }
 
-void GameAnalyticsInterface::SendDesignEvent(std::wstring eventId)
+void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 {
 	// Build parameter map.
 	auto parameters = std::map<std::wstring, std::wstring>();
@@ -36,7 +36,7 @@ void GameAnalyticsInterface::SendDesignEvent(std::wstring eventId)
 	this->SendGameAnalyticsEvent(L"design", parameters);
 }
 
-void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring category, std::map<std::wstring, std::wstring> parameters)
+void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
 {
 	// Build event JSON.
 	// http://support.gameanalytics.com/hc/en-us/articles/200841486-General-event-structure
@@ -104,17 +104,17 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(std::wstring category, std::
 	});
 }
 
-void GameAnalyticsInterface::SetBuild(std::wstring build)
+void GameAnalyticsInterface::SetBuild(const std::wstring & build)
 {
 	this->build = build;
 }
 
-void GameAnalyticsInterface::SetUserId(std::wstring userId)
+void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 {
 	this->userId = userId;
 }
 
-std::wstring GameAnalyticsInterface::GetAppVersion()
+std::wstring GameAnalyticsInterface::GetAppVersion() const
 {
 	auto thisPackage = Windows::ApplicationModel::Package::Current;
 	auto version = thisPackage->Id->Version;
@@ -124,7 +124,7 @@ std::wstring GameAnalyticsInterface::GetAppVersion()
 		+ L"." + std::to_wstring(version.Revision));
 }
 
-std::wstring GameAnalyticsInterface::GetHardwareId()
+std::wstring GameAnalyticsInterface::GetHardwareId() const
 {
 	auto packageSpecificToken = Windows::System::Profile::HardwareIdentification::GetPackageSpecificToken(nullptr);
 	auto hardwareId = packageSpecificToken->Id;
@@ -132,7 +132,7 @@ std::wstring GameAnalyticsInterface::GetHardwareId()
 	return std::wstring(hardwareIdString->Data());
 }
 
-std::wstring GameAnalyticsInterface::GenerateSessionId()
+std::wstring GameAnalyticsInterface::GenerateSessionId() const
 {
 	GUID result;
 	HRESULT hr = CoCreateGuid(&result);
