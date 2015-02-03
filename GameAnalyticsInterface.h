@@ -13,22 +13,22 @@ namespace GameAnalytics
 		// Uses the app package version as build id,
 		// uses the Application Specific Hardware Identifier (ASHWID) as user id,
 		// and generates a new GUID for the session.
-		GameAnalyticsInterface(std::wstring gameKey, std::wstring secretKey);
+		GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey);
 
 		// Sends the design event with the specified id to the GameAnalytics backend.
 		// Can be sub-categorized by using ":" notation.
 		// For example, an event_id could be: "PickedUpAmmo:Shotgun" (for design),
 		// "Purchase:RocketLauncher" (for business),
 		// or "Exception:NullReference" (for quality).
-		void SendDesignEvent(std::wstring eventId);
+		void SendDesignEvent(const std::wstring & eventId) const;
 
 		// Sets the current version of the game being played. Defaults to the app package version.
-		void SetBuild(std::wstring build);
+		void SetBuild(const std::wstring & build);
 
 		// Sets the unique ID representing the user playing the game.
 		// This ID should remain the same across different play sessions.
 		// Defaults to the ASHWID.
-		void SetUserId(std::wstring userId);
+		void SetUserId(const std::wstring & userId);
 		
 	private:
 		Windows::Web::Http::HttpClient^ httpClient;
@@ -41,16 +41,16 @@ namespace GameAnalytics
 		std::wstring userId;
 		
 		// Gets the app package version.
-		std::wstring GetAppVersion();
+		std::wstring GetAppVersion() const;
 
 		// Gets the Application Specific Hardware Identifier (ASHWID).
 		// See https://msdn.microsoft.com/en-us/library/windows/apps/jj553431
-		std::wstring GetHardwareId();
+		std::wstring GetHardwareId() const;
 		
 		// Generates a new GUID for the current session.
-		std::wstring GenerateSessionId();
+		std::wstring GenerateSessionId() const;
 
 		// Sends the event with the specified category and parameters to the GameAnalytics backend.
-		void SendGameAnalyticsEvent(std::wstring category, std::map<std::wstring, std::wstring> parameters);
+		void SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
 	};
 }
