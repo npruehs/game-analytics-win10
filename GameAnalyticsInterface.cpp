@@ -1,9 +1,8 @@
 #include "pch.h"
 
-#include <ppltasks.h>
-#include <string>
-
 #include "GameAnalyticsInterface.h"
+
+#include <ppltasks.h>
 
 using namespace GameAnalytics;
 
