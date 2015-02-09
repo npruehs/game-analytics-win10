@@ -16,6 +16,10 @@ namespace GameAnalytics
 		// and generates a new GUID for the session.
 		GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey);
 
+		// Sends the business event with the specified id to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
+		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const float amount) const;
+
 		// Sends the design event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
 		void SendDesignEvent(const std::wstring & eventId) const;

@@ -25,6 +25,23 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 {
 }
 
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const float amount) const
+{
+	// Build parameter map.
+	auto parameters = std::map<std::wstring, std::wstring>();
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"currency", currency));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"amount", std::to_wstring(amount)));
+
+	if (!this->area.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
+	}
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"business", parameters);
+}
+
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 {
 	// Build parameter map.
