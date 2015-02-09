@@ -23,6 +23,9 @@ namespace GameAnalytics
 		// or "Exception:NullReference" (for quality).
 		void SendDesignEvent(const std::wstring & eventId) const;
 
+		// Sets the area to be associated with each subsequent design, error and business event.
+		void SetArea(const std::wstring & area);
+
 		// Sets the current version of the game being played. Defaults to the app package version.
 		void SetBuild(const std::wstring & build);
 
@@ -37,6 +40,7 @@ namespace GameAnalytics
 		std::wstring gameKey;
 		std::wstring secretKey;
 
+		std::wstring area;
 		std::wstring build;
 		std::wstring sessionId;
 		std::wstring userId;

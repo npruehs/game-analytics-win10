@@ -30,6 +30,11 @@ void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 	// Build parameter map.
 	auto parameters = std::map<std::wstring, std::wstring>();
 	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
+	
+	if (!this->area.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
+	}
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"design", parameters);
@@ -101,6 +106,11 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 			throw ref new Platform::FailureException(messageString);
 		}
 	});
+}
+
+void GameAnalyticsInterface::SetArea(const std::wstring & area)
+{
+	this->area = area;
 }
 
 void GameAnalyticsInterface::SetBuild(const std::wstring & build)
