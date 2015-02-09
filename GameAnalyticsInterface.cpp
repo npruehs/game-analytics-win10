@@ -194,7 +194,7 @@ void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 std::map<std::wstring, std::wstring> GameAnalyticsInterface::BuildDesignParameterMap(const std::wstring & eventId) const
 {
 	auto parameters = std::map<std::wstring, std::wstring>();
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"event_id", eventId));
 
 	if (!this->area.empty())
 	{
