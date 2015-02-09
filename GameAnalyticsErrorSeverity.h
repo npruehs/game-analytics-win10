@@ -20,19 +20,19 @@ namespace GameAnalytics
 			switch (severity)
 			{
 			case Critical:
-				return L"Critical";
+				return L"critical";
 
 			case Error:
-				return L"Error";
+				return L"error";
 
 			case Warning:
-				return L"Warning";
+				return L"warning";
 
 			case Info:
-				return L"Info";
+				return L"info";
 
 			case Debug:
-				return L"Debug";
+				return L"debug";
 			}
 
 			// Unknown severity value.
