@@ -10,11 +10,11 @@ Open the package.appxmanifest file, and add the _Internet (Client & Server)_ cap
 
 ### Import source code
 
-Add GameAnalyticsInterface.h and GameAnalyticsInterface.cpp to your app project.
+Add the source and header files to your app project.
 
 ### Enter your game keys
 
-Include the header file and create a new instance of the GameAnalytics interface, specifying your game key and secret key. You can find your keys on the GameAnalytics dashboard, under your Game Settings.
+Include the GameAnalyticsInterface.h header file and create a new instance of the GameAnalytics interface, specifying your game key and secret key. You can find your keys on the GameAnalytics dashboard, under your Game Settings.
 
 ```
   #include "GameAnalyticsInterface.h"
@@ -34,6 +34,8 @@ Done! GameAnalytics is set up and ready for use. Sending a design event to the b
 
 Note that this method call is asynchronous. Calling this methods won't cause your app to block.
 
+For sending business, error or user events, call SendBusinessEvent, SendErrorEvent or SendUserEvent, respectively.
+
 ## Error Handling
 
 If any errors occur sending the event, a Platform::COMException will be thrown. This most likely indicates an invalid game or secret key. Double-check the keys in your dashboard, and ensure you're connected to the internet and the app is correctly set up to access the network.
@@ -45,6 +47,10 @@ If the event could be submitted, but any other errors occur, a Platform::Failure
 By default, this plugin will use the app package version as build id, and the Application Specific Hardware Identifier (ASHWID) as user id (see https://msdn.microsoft.com/en-us/library/windows/apps/jj553431 for details).
 
 You can change these at any time by the SetBuild and SetUserId methods.
+
+## Specifying The Current Area
+
+Design, business and error events allow you to indicates the area or game level where the event occurred. You can set the area for all subsequent events by calling the SetArea method.
 
 ## Contributors
 
