@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include "GameAnalyticsErrorSeverity.h"
+
 namespace GameAnalytics
 {
 	class GameAnalyticsInterface
@@ -27,6 +29,10 @@ namespace GameAnalytics
 		// Sends the design event with the specified id and value to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
 		void SendDesignEvent(const std::wstring & eventId, const float value) const;
+
+		// Sends the error event with the specified message and severity to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "Exception:NullReference".
+		void SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const;
 
 		// Sets the area to be associated with each subsequent design, error and business event.
 		void SetArea(const std::wstring & area);

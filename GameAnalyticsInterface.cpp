@@ -61,6 +61,22 @@ void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const
 	this->SendGameAnalyticsEvent(L"design", parameters);
 }
 
+void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const
+{
+	// Build parameter map.
+	auto parameters = std::map<std::wstring, std::wstring>();
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"message", message));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"severity", Severity::ToWString(severity)));
+
+	if (!this->area.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
+	}
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"error", parameters);
+}
+
 void GameAnalyticsInterface::SetArea(const std::wstring & area)
 {
 	this->area = area;
