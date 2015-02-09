@@ -17,11 +17,12 @@ namespace GameAnalytics
 		GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey);
 
 		// Sends the design event with the specified id to the GameAnalytics backend.
-		// Can be sub-categorized by using ":" notation.
-		// For example, an event_id could be: "PickedUpAmmo:Shotgun" (for design),
-		// "Purchase:RocketLauncher" (for business),
-		// or "Exception:NullReference" (for quality).
+		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
 		void SendDesignEvent(const std::wstring & eventId) const;
+
+		// Sends the design event with the specified id and value to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
+		void SendDesignEvent(const std::wstring & eventId, const float value) const;
 
 		// Sets the area to be associated with each subsequent design, error and business event.
 		void SetArea(const std::wstring & area);
@@ -44,7 +45,13 @@ namespace GameAnalytics
 		std::wstring build;
 		std::wstring sessionId;
 		std::wstring userId;
-		
+
+		// Builds the event parameter map for design analytics events.
+		std::map<std::wstring, std::wstring> BuildDesignParameterMap(const std::wstring & eventId) const;
+
+		// Generates a new GUID for the current session.
+		std::wstring GenerateSessionId() const;
+
 		// Gets the app package version.
 		std::wstring GetAppVersion() const;
 
@@ -52,9 +59,6 @@ namespace GameAnalytics
 		// See https://msdn.microsoft.com/en-us/library/windows/apps/jj553431
 		std::wstring GetHardwareId() const;
 		
-		// Generates a new GUID for the current session.
-		std::wstring GenerateSessionId() const;
-
 		// Sends the event with the specified category and parameters to the GameAnalytics backend.
 		void SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
 	};

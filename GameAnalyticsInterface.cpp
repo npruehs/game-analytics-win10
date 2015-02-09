@@ -28,16 +28,85 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 {
 	// Build parameter map.
+	auto parameters = this->BuildDesignParameterMap(eventId);
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"design", parameters);
+}
+
+void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const float value) const
+{
+	// Build parameter map.
+	auto parameters = this->BuildDesignParameterMap(eventId);
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"value", std::to_wstring(value)));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"design", parameters);
+}
+
+void GameAnalyticsInterface::SetArea(const std::wstring & area)
+{
+	this->area = area;
+}
+
+void GameAnalyticsInterface::SetBuild(const std::wstring & build)
+{
+	this->build = build;
+}
+
+void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
+{
+	this->userId = userId;
+}
+
+std::map<std::wstring, std::wstring> GameAnalyticsInterface::BuildDesignParameterMap(const std::wstring & eventId) const
+{
 	auto parameters = std::map<std::wstring, std::wstring>();
 	parameters.insert(std::pair<std::wstring, std::wstring>(L"eventId", eventId));
-	
+
 	if (!this->area.empty())
 	{
 		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
 	}
 
-	// Send event.
-	this->SendGameAnalyticsEvent(L"design", parameters);
+	return parameters;
+}
+
+std::wstring GameAnalyticsInterface::GenerateSessionId() const
+{
+	GUID result;
+	HRESULT hr = CoCreateGuid(&result);
+
+	if (SUCCEEDED(hr))
+	{
+		// Generate new GUID.
+		Guid guid(result);
+		auto guidString = std::wstring(guid.ToString()->Data());
+
+		// Remove curly brackets.
+		auto sessionId = guidString.substr(1, guidString.length() - 2);
+		return sessionId;
+	}
+
+	throw Exception::CreateException(hr);
+}
+
+std::wstring GameAnalyticsInterface::GetAppVersion() const
+{
+	auto thisPackage = Windows::ApplicationModel::Package::Current;
+	auto version = thisPackage->Id->Version;
+	return std::wstring(std::to_wstring(version.Major)
+		+ L"." + std::to_wstring(version.Minor)
+		+ L"." + std::to_wstring(version.Build)
+		+ L"." + std::to_wstring(version.Revision));
+}
+
+std::wstring GameAnalyticsInterface::GetHardwareId() const
+{
+	auto packageSpecificToken = Windows::System::Profile::HardwareIdentification::GetPackageSpecificToken(nullptr);
+	auto hardwareId = packageSpecificToken->Id;
+	auto hardwareIdString = CryptographicBuffer::EncodeToHexString(hardwareId);
+	return std::wstring(hardwareIdString->Data());
 }
 
 void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
@@ -106,56 +175,4 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 			throw ref new Platform::FailureException(messageString);
 		}
 	});
-}
-
-void GameAnalyticsInterface::SetArea(const std::wstring & area)
-{
-	this->area = area;
-}
-
-void GameAnalyticsInterface::SetBuild(const std::wstring & build)
-{
-	this->build = build;
-}
-
-void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
-{
-	this->userId = userId;
-}
-
-std::wstring GameAnalyticsInterface::GetAppVersion() const
-{
-	auto thisPackage = Windows::ApplicationModel::Package::Current;
-	auto version = thisPackage->Id->Version;
-	return std::wstring(std::to_wstring(version.Major)
-		+ L"." + std::to_wstring(version.Minor)
-		+ L"." + std::to_wstring(version.Build)
-		+ L"." + std::to_wstring(version.Revision));
-}
-
-std::wstring GameAnalyticsInterface::GetHardwareId() const
-{
-	auto packageSpecificToken = Windows::System::Profile::HardwareIdentification::GetPackageSpecificToken(nullptr);
-	auto hardwareId = packageSpecificToken->Id;
-	auto hardwareIdString = CryptographicBuffer::EncodeToHexString(hardwareId);
-	return std::wstring(hardwareIdString->Data());
-}
-
-std::wstring GameAnalyticsInterface::GenerateSessionId() const
-{
-	GUID result;
-	HRESULT hr = CoCreateGuid(&result);
-
-	if (SUCCEEDED(hr))
-	{
-		// Generate new GUID.
-		Guid guid(result);
-		auto guidString = std::wstring(guid.ToString()->Data());
-
-		// Remove curly brackets.
-		auto sessionId = guidString.substr(1, guidString.length() - 2);
-		return sessionId;
-	}
-
-	throw Exception::CreateException(hr);
 }
