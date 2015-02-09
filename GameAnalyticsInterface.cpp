@@ -25,7 +25,7 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 {
 }
 
-void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const float amount) const
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
 	// Build parameter map.
 	auto parameters = std::map<std::wstring, std::wstring>();

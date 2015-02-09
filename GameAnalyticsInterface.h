@@ -21,7 +21,11 @@ namespace GameAnalytics
 
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
-		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const float amount) const;
+		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.
+		// For all other virtual currency strings, you will need to create your custom dashboards and widgets.
+		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
+		// For example, if the currency is "USD", the amount should be specified in cents.
+		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const;
 
 		// Sends the design event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
