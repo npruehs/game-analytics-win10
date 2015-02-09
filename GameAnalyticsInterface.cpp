@@ -77,6 +77,105 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 	this->SendGameAnalyticsEvent(L"error", parameters);
 }
 
+void GameAnalyticsInterface::SendUserEvent(const User & user) const
+{
+	// Build parameter map.
+	auto parameters = std::map<std::wstring, std::wstring>();
+
+	if (user.gender != Gender::Unknown)
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"gender", Gender::ToWString(user.gender)));
+	}
+
+	if (user.birthYear >= 0)
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"birth_year", std::to_wstring(user.birthYear)));
+	}
+
+	if (user.friendCount >= 0)
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"friend_count", std::to_wstring(user.friendCount)));
+	}
+
+	if (!user.facebookId.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"facebook_id", user.facebookId));
+	}
+
+	if (!user.googlePlusId.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"googleplus_id", user.googlePlusId));
+	}
+
+	if (!user.iOSId.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"ios_id", user.iOSId));
+	}
+
+	if (!user.androidId.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"android_id", user.androidId));
+	}
+
+	if (!user.adTruthId.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"adtruth_id", user.adTruthId));
+	}
+
+	if (!user.platform.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"platform", user.platform));
+	}
+
+	if (!user.device.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"device", user.device));
+	}
+
+	if (!user.osMajor.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"os_major", user.osMajor));
+	}
+
+	if (!user.osMinor.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"os_minor", user.osMinor));
+	}
+
+	if (!user.installPublisher.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_publisher", user.installPublisher));
+	}
+
+	if (!user.installSite.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_site", user.installSite));
+	}
+
+	if (!user.installCampaign.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_campaign", user.installCampaign));
+	}
+
+	if (!user.installAdGroup.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_adgroup", user.installAdGroup));
+	}
+
+	if (!user.installAd.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_ad", user.installAd));
+	}
+
+	if (!user.installKeyword.empty())
+	{
+		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_keyword", user.installKeyword));
+	}
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"user", parameters);
+}
+
 void GameAnalyticsInterface::SetArea(const std::wstring & area)
 {
 	this->area = area;
