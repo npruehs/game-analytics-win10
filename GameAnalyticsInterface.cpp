@@ -319,7 +319,7 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 		// Verify response.
 		auto responseString = std::wstring(responseBodyAsText->Data());
 
-		if (responseString.find(L"{\"status\":\"ok\"}") == std::string::npos)
+		if (responseString.find(L"\"enabled\":true") == std::string::npos)
 		{
 			auto message = L"Error sending analytics event: " + responseString;
 			auto messageString = ref new Platform::String(message.c_str());
