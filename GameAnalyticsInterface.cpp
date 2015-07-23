@@ -265,17 +265,22 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 	json.append(L"]");
 
 	// Generate MD5 of event data and secret key.
-	auto jsonAndSecretKey = json + this->secretKey;
-	auto jsonAndSecretKeyString = ref new String(jsonAndSecretKey.c_str());
+	auto jsonString = ref new String(json.c_str());
+	auto secretKeyString = ref new String(this->secretKey.c_str());
 
-	auto alg = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Md5);
-	auto buff = CryptographicBuffer::ConvertStringToBinary(jsonAndSecretKeyString, BinaryStringEncoding::Utf8);
-	auto hashed = alg->HashData(buff);
-	auto digest = CryptographicBuffer::EncodeToHexString(hashed);
+	auto alg = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha256);
+	auto jsonBuffer = CryptographicBuffer::ConvertStringToBinary(jsonString, BinaryStringEncoding::Utf8);
+	auto secretKeyBuffer = CryptographicBuffer::ConvertStringToBinary(secretKeyString, BinaryStringEncoding::Utf8);
+	auto hmacKey = alg->CreateKey(secretKeyBuffer);
+
+	auto hashedJsonBuffer = CryptographicEngine::Sign(hmacKey, jsonBuffer);
+	auto hashedJsonBase64 = CryptographicBuffer::EncodeToBase64String(hashedJsonBuffer);
 
 	// Build category URL.
 	std::wstring relativeUrl = this->gameKey + L"/" + category;
-	std::wstring absoluteUrl = L"http://api.gameanalytics.com/1/" + relativeUrl;
+	
+	// TODO: Replase by production URL http://api.gameanalytics.com/v2/
+	std::wstring absoluteUrl = L"http://sandbox-api.gameanalytics.com/v2/" + relativeUrl;
 	auto absoluteUrlString = ref new String(absoluteUrl.c_str());
 
 	// Send event to GameAnalytics.
@@ -287,7 +292,7 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 		(ref new Platform::String(json.c_str()),
 		Windows::Storage::Streams::UnicodeEncoding::Utf8,
 		ref new Platform::String(L"application/json"));
-	message->Headers->TryAppendWithoutValidation(L"Authorization", digest);
+	message->Headers->TryAppendWithoutValidation(L"Authorization", hashedJsonBase64);
 
 	auto response = ref new HttpResponseMessage();
 
