@@ -19,6 +19,11 @@ namespace GameAnalytics
 		// and generates a new GUID for the session.
 		GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey);
 
+		// Should be called when a new session starts.
+		// Determines if the SDK should be disabled and gets the server timestamp otherwise.
+		// That timestamp is used to calculate an offset, if client clock is not configured correctly. 
+		void GameAnalyticsInterface::Init() const;
+
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
 		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.

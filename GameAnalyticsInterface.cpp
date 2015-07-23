@@ -25,6 +25,20 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 {
 }
 
+void GameAnalyticsInterface::Init() const
+{
+	// Build parameter map.
+	auto parameters = std::map<std::wstring, std::wstring>();
+
+	// TODO: Get correct OS version.
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"platform", L"win8"));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"os_version", L"win 8.1"));
+	parameters.insert(std::pair<std::wstring, std::wstring>(L"sdk_version", L"win 2.0"));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"init", parameters);
+}
+
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
 	// Build parameter map.
