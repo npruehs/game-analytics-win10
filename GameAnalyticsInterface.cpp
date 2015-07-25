@@ -142,6 +142,25 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
+	jsonObject->Insert(L"score", this->ToJsonValue(score));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
 void GameAnalyticsInterface::SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const
 {
 	// Build event object.
@@ -306,6 +325,16 @@ JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & 
 {
 	auto jsonObject = this->BuildEventObject(L"design");
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildProgressionEventObject(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const
+{
+	auto jsonObject = this->BuildEventObject(L"progression");
+
+	auto eventIdString = ToWString(status) + L":" + eventId;
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventIdString));
 
 	return jsonObject;
 }
