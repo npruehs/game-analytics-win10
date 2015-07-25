@@ -24,7 +24,7 @@ namespace GameAnalytics
 		// Should be called when a new session starts.
 		// Determines if the SDK should be disabled and gets the server timestamp otherwise.
 		// That timestamp is used to calculate an offset, if client clock is not configured correctly. 
-		void GameAnalyticsInterface::Init();
+		task<void> GameAnalyticsInterface::Init();
 
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
