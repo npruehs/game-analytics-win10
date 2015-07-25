@@ -28,6 +28,8 @@ namespace GameAnalytics
 		// That timestamp is used to calculate an offset, if client clock is not configured correctly. 
 		task<JsonObject^> GameAnalyticsInterface::Init();
 
+		bool IsInitialized() const;
+
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
 		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.

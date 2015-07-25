@@ -61,6 +61,11 @@ task<JsonObject^> GameAnalyticsInterface::Init()
 	});
 }
 
+bool GameAnalyticsInterface::IsInitialized() const
+{
+	return this->initialized;
+}
+
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
 	// Build event object.
@@ -388,7 +393,7 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	JsonArray^ jsonArray = ref new JsonArray();
 	jsonArray->Append(eventObject);
 
-	// Generate MD5 of event data and secret key.
+	// Generate HMAC SHA256 of event data.
 	auto jsonString = jsonArray->Stringify();
 	auto secretKeyString = ref new String(this->secretKey.c_str());
 
