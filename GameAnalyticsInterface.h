@@ -5,7 +5,9 @@
 #include <string>
 
 #include "GameAnalyticsErrorSeverity.h"
+#include "GameAnalyticsProgressionStatus.h"
 #include "GameAnalyticsReceiptInfo.h"
+#include "GameAnalyticsResourceFlowType.h"
 #include "GameAnalyticsUserData.h"
 
 using namespace concurrency;
@@ -79,6 +81,23 @@ namespace GameAnalytics
 		// Event ids can be sub-categorized by using ":" notation, for example "Exception:NullReference".
 		void SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const;
 
+		// Sends the progression event with the specified status to the GameAnalytics backend.
+		// Progress event id can consist of 1-3 parts: Progression1:Progression2:Progression3.
+		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const;
+
+		// Sends the progression event with the specified status to the GameAnalytics backend.
+		// Progress event id can consist of 1-3 parts: Progression1:Progression2:Progression3.
+		// Includes player score for the attempt. Use with status "Fail" or "Complete" only.
+		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score) const;
+
+		// Sends the resource event with the specified flow type and currency and item data to the GameAnalytics backend.
+		void SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const;
+
+		// Sends the session end event to the GameAnalytics backend.
+		// Should always be sent whenever a session is determined to be over, for example whenever the app is suspended.
+		// Should be sent exactly once per session.
+		void SendSessionEndEvent() const;
+
 		// Sends the user event with the specified data to the GameAnalytics backend.
 		void SendUserEvent(const User & user) const;
 
@@ -122,6 +141,9 @@ namespace GameAnalytics
 
 		// Builds the event object for design analytics events.
 		JsonObject^ BuildDesignEventObject(const std::wstring & eventId) const;
+
+		// Builds the event object for progression analytics events.
+		JsonObject^ BuildProgressionEventObject(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const;
 
 		// Builds an receipt info object, as used by some business events.
 		JsonObject^ BuildReceiptObject(const ReceiptInfo & receiptInfo) const;
