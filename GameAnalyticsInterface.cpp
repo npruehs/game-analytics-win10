@@ -25,7 +25,7 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 {
 }
 
-void GameAnalyticsInterface::Init() const
+void GameAnalyticsInterface::Init()
 {
 	// Build parameter map.
 	auto parameters = std::map<std::wstring, std::wstring>();
@@ -36,7 +36,20 @@ void GameAnalyticsInterface::Init() const
 	parameters.insert(std::pair<std::wstring, std::wstring>(L"sdk_version", L"win 2.0"));
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"init", parameters);
+	this->SendGameAnalyticsEvent(L"init", parameters).then([this](std::wstring response)
+	{
+		// Verify response.
+		if (response.find(L"\"enabled\":true") == std::string::npos)
+		{
+			auto message = L"Error initializing GameAnalytics: " + response;
+			auto messageString = ref new Platform::String(message.c_str());
+			throw ref new Platform::FailureException(messageString);
+		}
+
+		this->initialized = true;
+
+		// TODO: Set server timestamp.
+	});
 }
 
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
@@ -255,7 +268,7 @@ std::wstring GameAnalyticsInterface::GetHardwareId() const
 	return std::wstring(hardwareIdString->Data());
 }
 
-void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
+task<std::wstring> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
 {
 	// Build event JSON.
 	// http://support.gameanalytics.com/hc/en-us/articles/200841486-General-event-structure
@@ -310,7 +323,7 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 
 	auto response = ref new HttpResponseMessage();
 
-	create_task(httpClient->SendRequestAsync(message)).then([=](HttpResponseMessage^ response)
+	return create_task(httpClient->SendRequestAsync(message)).then([=](HttpResponseMessage^ response)
 	{
 		// Validate HTTP status code.
 		response->EnsureSuccessStatusCode();
@@ -319,11 +332,13 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 		// Verify response.
 		auto responseString = std::wstring(responseBodyAsText->Data());
 
-		if (responseString.find(L"\"enabled\":true") == std::string::npos)
-		{
-			auto message = L"Error sending analytics event: " + responseString;
-			auto messageString = ref new Platform::String(message.c_str());
-			throw ref new Platform::FailureException(messageString);
-		}
+		//if (responseString.find(L"\"enabled\":true") == std::string::npos)
+		//{
+		//	auto message = L"Error sending analytics event: " + responseString;
+		//	auto messageString = ref new Platform::String(message.c_str());
+		//	throw ref new Platform::FailureException(messageString);
+		//}
+
+		return responseString;
 	});
 }

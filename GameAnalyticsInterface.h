@@ -7,6 +7,8 @@
 #include "GameAnalyticsErrorSeverity.h"
 #include "GameAnalyticsUserData.h"
 
+using namespace concurrency;
+
 namespace GameAnalytics
 {
 	class GameAnalyticsInterface
@@ -22,7 +24,7 @@ namespace GameAnalytics
 		// Should be called when a new session starts.
 		// Determines if the SDK should be disabled and gets the server timestamp otherwise.
 		// That timestamp is used to calculate an offset, if client clock is not configured correctly. 
-		void GameAnalyticsInterface::Init() const;
+		void GameAnalyticsInterface::Init();
 
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
@@ -59,6 +61,8 @@ namespace GameAnalytics
 		void SetUserId(const std::wstring & userId);
 		
 	private:
+		bool initialized;
+
 		Windows::Web::Http::HttpClient^ httpClient;
 
 		std::wstring gameKey;
@@ -83,6 +87,6 @@ namespace GameAnalytics
 		std::wstring GetHardwareId() const;
 		
 		// Sends the event with the specified category and parameters to the GameAnalytics backend.
-		void SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
+		task<std::wstring> SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
 	};
 }
