@@ -77,6 +77,9 @@ namespace GameAnalytics
 		std::wstring sessionId;
 		std::wstring userId;
 
+		// Builds an event object, adding GameAnalytics default annotations
+		JsonObject^ BuildEventObject(const std::wstring & category) const;
+
 		// Builds the event object for design analytics events.
 		JsonObject^ BuildDesignEventObject(const std::wstring & eventId) const;
 
@@ -89,7 +92,22 @@ namespace GameAnalytics
 		// Gets the Application Specific Hardware Identifier (ASHWID).
 		// See https://msdn.microsoft.com/en-us/library/windows/apps/jj553431
 		std::wstring GetHardwareId() const;
-		
+
+		// Gets the manufacturer of the device this app runs on.
+		std::wstring GetManufacturer() const;
+
+		// Gets the version of the operation systems this app runs on.
+		std::wstring GetOSVersion() const;
+
+		// Gets the platform this app runs on.
+		std::wstring GetPlatform() const;
+
+		// Gets the number of the current session.
+		int GetSessionNumber() const;
+
+		// Gets the version of this GameAnalytics SDK.
+		std::wstring GetSDKVersion() const;
+
 		// Get the elapsed time since initialization, in seconds.
 		uint64 GetTimeSinceInit() const;
 

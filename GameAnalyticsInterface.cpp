@@ -30,10 +30,9 @@ task<JsonObject^> GameAnalyticsInterface::Init()
 	// Build event object.
 	auto jsonObject = ref new JsonObject();
 
-	// TODO: Get correct OS version.
-	jsonObject->Insert(L"platform", this->ToJsonValue(L"win8"));
-	jsonObject->Insert(L"os_version", this->ToJsonValue(L"win 8.1"));
-	jsonObject->Insert(L"sdk_version", this->ToJsonValue(L"win 2.0"));
+	jsonObject->Insert(L"platform", this->ToJsonValue(this->GetPlatform()));
+	jsonObject->Insert(L"os_version", this->ToJsonValue(this->GetOSVersion()));
+	jsonObject->Insert(L"sdk_version", this->ToJsonValue(this->GetSDKVersion()));
 
 	// Send event.
 	return this->SendGameAnalyticsEvent(L"init", jsonObject).then([this](JsonObject^ response)
@@ -64,8 +63,7 @@ task<JsonObject^> GameAnalyticsInterface::Init()
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
 	// Build event object.
-	auto jsonObject = ref new JsonObject();
-	jsonObject->Insert(L"category", this->ToJsonValue(L"business"));
+	auto jsonObject = this->BuildEventObject(L"business");
 
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
 	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
@@ -102,8 +100,7 @@ void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const
 void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const
 {
 	// Build event object.
-	auto jsonObject = ref new JsonObject();
-	jsonObject->Insert(L"category", this->ToJsonValue(L"error"));
+	auto jsonObject = this->BuildEventObject(L"error");
 
 	jsonObject->Insert(L"message", this->ToJsonValue(message));
 	jsonObject->Insert(L"severity", this->ToJsonValue(Severity::ToWString(severity)));
@@ -120,8 +117,7 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
 {
 	// Build event object.
-	auto jsonObject = ref new JsonObject();
-	jsonObject->Insert(L"category", this->ToJsonValue(L"user"));
+	auto jsonObject = this->BuildEventObject(L"user");
 
 	if (user.gender != Gender::Unknown)
 	{
@@ -232,10 +228,53 @@ void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 	this->userId = userId;
 }
 
-JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & eventId) const
+JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & category) const
 {
 	auto jsonObject = ref new JsonObject();
-	jsonObject->Insert(L"category", this->ToJsonValue(L"design"));
+
+	// Add category.
+	jsonObject->Insert(L"category", this->ToJsonValue(category));
+
+	// TODO: Get device model.
+	jsonObject->Insert(L"device", this->ToJsonValue(L"unknown"));
+
+	// Add GameAnalytics API version.
+	jsonObject->Insert(L"v", this->ToJsonValue(2));
+
+	// Add user id.
+	jsonObject->Insert(L"user_id", this->ToJsonValue(this->userId));
+
+	// Add timestamp.
+	auto clientTimestamp = this->serverTimestamp + this->GetTimeSinceInit();
+	jsonObject->Insert(L"client_ts", this->ToJsonValue(clientTimestamp));
+
+	// Add SDK version.
+	jsonObject->Insert(L"sdk_version", this->ToJsonValue(this->GetSDKVersion()));
+
+	// Add OS version.
+	jsonObject->Insert(L"os_version", this->ToJsonValue(this->GetOSVersion()));
+
+	// Add manufacturer.
+	jsonObject->Insert(L"manufacturer", this->ToJsonValue(this->GetManufacturer()));
+
+	// Add platform.
+	jsonObject->Insert(L"platform", this->ToJsonValue(this->GetPlatform()));
+
+	// Add session ID.
+	jsonObject->Insert(L"session_id", this->ToJsonValue(this->sessionId));
+
+	// Add session number.
+	jsonObject->Insert(L"session_num", this->ToJsonValue(this->GetSessionNumber()));
+
+	// Add build.
+	jsonObject->Insert(L"build", this->ToJsonValue(this->build));
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & eventId) const
+{
+	auto jsonObject = this->BuildEventObject(L"design");
 
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
 
@@ -284,6 +323,35 @@ std::wstring GameAnalyticsInterface::GetHardwareId() const
 	return std::wstring(hardwareIdString->Data());
 }
 
+std::wstring GameAnalyticsInterface::GetManufacturer() const
+{
+	// TODO: Get manufacturer.
+	return L"unknown";
+}
+
+std::wstring GameAnalyticsInterface::GetOSVersion() const
+{
+	// TODO: Get correct OS version.
+	return L"win 8.1";
+}
+
+std::wstring GameAnalyticsInterface::GetPlatform() const
+{
+	// TODO: Get correct platform.
+	return L"win8";
+}
+
+int GameAnalyticsInterface::GetSessionNumber() const
+{
+	// TODO: Get correct session number.
+	return 1;
+}
+
+std::wstring GameAnalyticsInterface::GetSDKVersion() const
+{
+	return L"win 2.0";
+}
+
 uint64 GameAnalyticsInterface::GetTimeSinceInit() const
 {
 	LARGE_INTEGER currentTime;
@@ -311,20 +379,6 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	// Build event JSON.
 	JsonArray^ jsonArray = ref new JsonArray();
 	jsonArray->Append(eventObject);
-
-	// Add category.
-	//jsonObject->Insert(L"category", this->ToJsonValue(category));
-
-	// Add header.
-	// TODO: Get device model.
-	//auto clientTimestamp = this->serverTimestamp + this->GetTimeSinceInit();
-
-	//json.append(L"\"device\":\"unknown\",");
-	//json.append(L"\"v\":\"2\",");
-	//json.append(L"\"user_id\":\"" + this->userId + L"\",");
-	//json.append(L"\"client_ts\":\"" + this->userId + L"\",");
-	//json.append(L"\"session_id\":\"" + this->sessionId + L"\",");
-	//json.append(L"\"build\":\"" + this->build + L"\"");
 
 	// Generate MD5 of event data and secret key.
 	auto jsonString = jsonArray->Stringify();
@@ -366,15 +420,5 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	}).then([=](String^ responseBodyAsText){
 		JsonObject^ json = JsonObject::Parse(responseBodyAsText);
 		return json;
-
-		// Verify response.
-		//auto responseString = std::wstring(responseBodyAsText->Data());
-
-		//if (responseString.find(L"\"enabled\":true") == std::string::npos)
-		//{
-		//	auto message = L"Error sending analytics event: " + responseString;
-		//	auto messageString = ref new Platform::String(message.c_str());
-		//	throw ref new Platform::FailureException(messageString);
-		//}
 	});
 }
