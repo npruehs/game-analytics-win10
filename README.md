@@ -51,7 +51,11 @@ Done! GameAnalytics is set up and ready for use. Sending a design event to the b
 
 Note that this method call is asynchronous. Calling this methods won't cause your app to block.
 
-For sending business or error events, call SendBusinessEvent or SendErrorEvent, respectively.
+You can send other events by calling the SendBusinessEvent, SendErrorEvent, SendProgressionEvent and SendResourceEvent methods.
+
+### Session handling
+
+You should propagate the [App lifecycle](https://msdn.microsoft.com/en-us/library/windows/apps/hh464925.aspx) Suspending and Resuming events to GameAnalytics by calling SendSessionEndEvent and SendUserEvent, respectively. 
 
 ## Error Handling
 
