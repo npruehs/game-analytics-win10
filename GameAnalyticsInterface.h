@@ -53,9 +53,6 @@ namespace GameAnalytics
 		// Sends the user event with the specified data to the GameAnalytics backend.
 		void SendUserEvent(const User & user) const;
 
-		// Sets the area to be associated with each subsequent design, error and business event.
-		void SetArea(const std::wstring & area);
-
 		void SetBirthYear(const int birthYear);
 
 		// Sets the current version of the game being played. Defaults to the app package version.
@@ -82,7 +79,6 @@ namespace GameAnalytics
 		std::wstring gameKey;
 		std::wstring secretKey;
 
-		std::wstring area;
 		std::wstring build;
 		std::wstring sessionId;
 		std::wstring userId;

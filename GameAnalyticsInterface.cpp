@@ -76,11 +76,6 @@ void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, con
 	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
 	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
 
-	if (!this->area.empty())
-	{
-		jsonObject->Insert(L"area", this->ToJsonValue(this->area));
-	}
-
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
@@ -111,11 +106,6 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 
 	jsonObject->Insert(L"message", this->ToJsonValue(message));
 	jsonObject->Insert(L"severity", this->ToJsonValue(Severity::ToWString(severity)));
-
-	if (!this->area.empty())
-	{
-		jsonObject->Insert(L"area", this->ToJsonValue(this->area));
-	}
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
@@ -149,11 +139,6 @@ void GameAnalyticsInterface::SendUserEvent(const User & user) const
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
-}
-
-void GameAnalyticsInterface::SetArea(const std::wstring & area)
-{
-	this->area = area;
 }
 
 void GameAnalyticsInterface::SetBirthYear(const int birthYear)
@@ -264,13 +249,7 @@ JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & catego
 JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & eventId) const
 {
 	auto jsonObject = this->BuildEventObject(L"design");
-
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
-
-	if (!this->area.empty())
-	{
-		jsonObject->Insert(L"area", this->ToJsonValue(this->area));
-	}
 
 	return jsonObject;
 }
