@@ -22,7 +22,8 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 	secretKey(secretKey),
 	build(this->GetAppVersion()),
 	sessionId(this->GenerateSessionId()),
-	userId(this->GetHardwareId())
+	userId(this->GetHardwareId()),
+	user(std::make_shared<User>())
 {
 }
 
@@ -122,98 +123,29 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
 {
-	// Build event object.
-	auto jsonObject = this->BuildEventObject(L"user");
-
-	if (user.gender != Gender::Unknown)
-	{
-		jsonObject->Insert(L"gender", this->ToJsonValue(Gender::ToWString(user.gender)));
-	}
-
+	// Store user data.
 	if (user.birthYear >= 0)
 	{
-		jsonObject->Insert(L"birth_year", this->ToJsonValue(user.birthYear));
-	}
-
-	if (user.friendCount >= 0)
-	{
-		jsonObject->Insert(L"friend_count", this->ToJsonValue(user.friendCount));
+		this->user->birthYear = user.birthYear;
 	}
 
 	if (!user.facebookId.empty())
 	{
-		jsonObject->Insert(L"facebook_id", this->ToJsonValue(user.facebookId));
+		this->user->facebookId = user.facebookId;
+	}
+
+	if (user.gender != Gender::Unknown)
+	{
+		this->user->gender = user.gender;
 	}
 
 	if (!user.googlePlusId.empty())
 	{
-		jsonObject->Insert(L"googleplus_id", this->ToJsonValue(user.googlePlusId));
+		this->user->googlePlusId = user.googlePlusId;
 	}
 
-	if (!user.iOSId.empty())
-	{
-		jsonObject->Insert(L"ios_id", this->ToJsonValue(user.iOSId));
-	}
-
-	if (!user.androidId.empty())
-	{
-		jsonObject->Insert(L"android_id", this->ToJsonValue(user.androidId));
-	}
-
-	if (!user.adTruthId.empty())
-	{
-		jsonObject->Insert(L"adtruth_id", this->ToJsonValue(user.adTruthId));
-	}
-
-	if (!user.platform.empty())
-	{
-		jsonObject->Insert(L"platform", this->ToJsonValue(user.platform));
-	}
-
-	if (!user.device.empty())
-	{
-		jsonObject->Insert(L"device", this->ToJsonValue(user.device));
-	}
-
-	if (!user.osMajor.empty())
-	{
-		jsonObject->Insert(L"os_major", this->ToJsonValue(user.osMajor));
-	}
-
-	if (!user.osMinor.empty())
-	{
-		jsonObject->Insert(L"os_minor", this->ToJsonValue(user.osMinor));
-	}
-
-	if (!user.installPublisher.empty())
-	{
-		jsonObject->Insert(L"install_publisher", this->ToJsonValue(user.installPublisher));
-	}
-
-	if (!user.installSite.empty())
-	{
-		jsonObject->Insert(L"install_site", this->ToJsonValue(user.installSite));
-	}
-
-	if (!user.installCampaign.empty())
-	{
-		jsonObject->Insert(L"install_campaign", this->ToJsonValue(user.installCampaign));
-	}
-
-	if (!user.installAdGroup.empty())
-	{
-		jsonObject->Insert(L"install_adgroup", this->ToJsonValue(user.installAdGroup));
-	}
-
-	if (!user.installAd.empty())
-	{
-		jsonObject->Insert(L"install_ad", this->ToJsonValue(user.installAd));
-	}
-
-	if (!user.installKeyword.empty())
-	{
-		jsonObject->Insert(L"install_keyword", this->ToJsonValue(user.installKeyword));
-	}
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"user");
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
@@ -224,9 +156,29 @@ void GameAnalyticsInterface::SetArea(const std::wstring & area)
 	this->area = area;
 }
 
+void GameAnalyticsInterface::SetBirthYear(const int birthYear)
+{
+	this->user->birthYear = birthYear;
+}
+
 void GameAnalyticsInterface::SetBuild(const std::wstring & build)
 {
 	this->build = build;
+}
+
+void GameAnalyticsInterface::SetFacebookId(const std::wstring & facebookId)
+{
+	this->user->facebookId = facebookId;
+}
+
+void GameAnalyticsInterface::SetGender(const Gender::Gender gender)
+{
+	this->user->gender = gender;
+}
+
+void GameAnalyticsInterface::SetGooglePlusId(const std::wstring & googlePlusId)
+{
+	this->user->googlePlusId = googlePlusId;
 }
 
 void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
@@ -278,6 +230,30 @@ JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & catego
 
 	// Add session number.
 	jsonObject->Insert(L"session_num", this->ToJsonValue(this->GetSessionNumber()));
+
+	// Add Google+ id.
+	if (!this->user->googlePlusId.empty())
+	{
+		jsonObject->Insert(L"googleplus_id", this->ToJsonValue(this->user->googlePlusId));
+	}
+
+	// Add Facebook id.
+	if (!this->user->facebookId.empty())
+	{
+		jsonObject->Insert(L"facebook_id", this->ToJsonValue(this->user->facebookId));
+	}
+
+	// Add gender.
+	if (this->user->gender != Gender::Unknown)
+	{
+		jsonObject->Insert(L"gender", this->ToJsonValue(Gender::ToWString(this->user->gender)));
+	}
+
+	// Add birthyear.
+	if (this->user->birthYear >= 0)
+	{
+		jsonObject->Insert(L"birth_year", this->ToJsonValue(this->user->birthYear));
+	}
 
 	// Add build.
 	jsonObject->Insert(L"build", this->ToJsonValue(this->build));

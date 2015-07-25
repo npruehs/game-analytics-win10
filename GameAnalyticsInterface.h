@@ -56,8 +56,16 @@ namespace GameAnalytics
 		// Sets the area to be associated with each subsequent design, error and business event.
 		void SetArea(const std::wstring & area);
 
+		void SetBirthYear(const int birthYear);
+
 		// Sets the current version of the game being played. Defaults to the app package version.
 		void SetBuild(const std::wstring & build);
+
+		void SetFacebookId(const std::wstring & facebookId);
+
+		void SetGender(const Gender::Gender gender);
+
+		void SetGooglePlusId(const std::wstring & googlePlusId);
 
 		// Sets the unique ID representing the user playing the game.
 		// This ID should remain the same across different play sessions.
@@ -78,6 +86,8 @@ namespace GameAnalytics
 		std::wstring build;
 		std::wstring sessionId;
 		std::wstring userId;
+
+		std::shared_ptr<User> user;
 
 		// Builds an event object, adding GameAnalytics default annotations
 		JsonObject^ BuildEventObject(const std::wstring & category) const;
