@@ -9,6 +9,8 @@
 
 using namespace concurrency;
 
+using namespace Windows::Data::Json;
+
 namespace GameAnalytics
 {
 	class GameAnalyticsInterface
@@ -24,7 +26,7 @@ namespace GameAnalytics
 		// Should be called when a new session starts.
 		// Determines if the SDK should be disabled and gets the server timestamp otherwise.
 		// That timestamp is used to calculate an offset, if client clock is not configured correctly. 
-		task<void> GameAnalyticsInterface::Init();
+		task<JsonObject^> GameAnalyticsInterface::Init();
 
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
@@ -62,6 +64,8 @@ namespace GameAnalytics
 		
 	private:
 		bool initialized;
+		long serverTimestamp;
+		LARGE_INTEGER initializationTime;
 
 		Windows::Web::Http::HttpClient^ httpClient;
 
@@ -73,8 +77,8 @@ namespace GameAnalytics
 		std::wstring sessionId;
 		std::wstring userId;
 
-		// Builds the event parameter map for design analytics events.
-		std::map<std::wstring, std::wstring> BuildDesignParameterMap(const std::wstring & eventId) const;
+		// Builds the event object for design analytics events.
+		JsonObject^ BuildDesignEventObject(const std::wstring & eventId) const;
 
 		// Generates a new GUID for the current session.
 		std::wstring GenerateSessionId() const;
@@ -86,7 +90,13 @@ namespace GameAnalytics
 		// See https://msdn.microsoft.com/en-us/library/windows/apps/jj553431
 		std::wstring GetHardwareId() const;
 		
-		// Sends the event with the specified category and parameters to the GameAnalytics backend.
-		task<std::wstring> SendGameAnalyticsEvent(const std::wstring & route, const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
+		// Get the elapsed time since initialization, in seconds.
+		uint64 GetTimeSinceInit() const;
+
+		JsonValue^ ToJsonValue(std::wstring s) const;
+		JsonValue^ ToJsonValue(double d) const;
+
+		// Sends the specified event to the GameAnalytics backend.
+		task<JsonObject^> SendGameAnalyticsEvent(const std::wstring & route, JsonObject^ eventObject) const;
 	};
 }
