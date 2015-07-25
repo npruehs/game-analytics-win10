@@ -174,6 +174,16 @@ void GameAnalyticsInterface::SendResourceEvent(const FlowType::FlowType flowType
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
+void GameAnalyticsInterface::SendSessionEndEvent() const
+{
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"session_end");
+	jsonObject->Insert(L"length", this->ToJsonValue(this->GetTimeSinceInit()));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
 {
 	// Store user data.

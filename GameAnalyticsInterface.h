@@ -93,6 +93,11 @@ namespace GameAnalytics
 		// Sends the resource event with the specified flow type and currency and item data to the GameAnalytics backend.
 		void SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const;
 
+		// Sends the session end event to the GameAnalytics backend.
+		// Should always be sent whenever a session is determined to be over, for example whenever the app is suspended.
+		// Should be sent exactly once per session.
+		void SendSessionEndEvent() const;
+
 		// Sends the user event with the specified data to the GameAnalytics backend.
 		void SendUserEvent(const User & user) const;
 
