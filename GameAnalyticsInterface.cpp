@@ -70,11 +70,42 @@ bool GameAnalyticsInterface::IsInitialized() const
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
 	// Build event object.
-	auto jsonObject = this->BuildEventObject(L"business");
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
 
-	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
-	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
-	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+
+	jsonObject->Insert(L"receipt_info", receiptObject);
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+
+	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
+	jsonObject->Insert(L"receipt_info", receiptObject);
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
@@ -171,6 +202,18 @@ void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 	this->userId = userId;
 }
 
+JsonObject^ GameAnalyticsInterface::BuildBusinessEventObject(const std::wstring & eventId, const std::wstring & currency, const int amount) const
+{
+	auto jsonObject = this->BuildEventObject(L"business");
+
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
+	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
+	jsonObject->Insert(L"transaction_num", this->ToJsonValue(this->GetTransactionNumber()));
+
+	return jsonObject;
+}
+
 JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & category) const
 {
 	// Check if initialized.
@@ -254,6 +297,23 @@ JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & 
 	return jsonObject;
 }
 
+JsonObject^ GameAnalyticsInterface::BuildReceiptObject(const ReceiptInfo & receiptInfo) const
+{
+	auto receiptObject = ref new JsonObject();
+
+	receiptObject->Insert(L"receipt", this->ToJsonValue(receiptInfo.receipt));
+	
+	// TODO: Set correct store as soon as available in GameAnalytics.
+	receiptObject->Insert(L"store", this->ToJsonValue(L"windows_phone"));
+
+	if (!receiptInfo.signature.empty())
+	{
+		receiptObject->Insert(L"signature", this->ToJsonValue(receiptInfo.signature));
+	}
+
+	return receiptObject;
+}
+
 std::wstring GameAnalyticsInterface::GenerateSessionId() const
 {
 	GUID result;
@@ -330,6 +390,12 @@ uint64 GameAnalyticsInterface::GetTimeSinceInit() const
 	}
 
 	return (currentTime.QuadPart - this->initializationTime.QuadPart) / 10000000;
+}
+
+int GameAnalyticsInterface::GetTransactionNumber() const
+{
+	// TODO: Get correct transaction number.
+	return 1;
 }
 
 JsonValue^ GameAnalyticsInterface::ToJsonValue(std::wstring s) const

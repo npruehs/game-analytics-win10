@@ -5,6 +5,7 @@
 #include <string>
 
 #include "GameAnalyticsErrorSeverity.h"
+#include "GameAnalyticsReceiptInfo.h"
 #include "GameAnalyticsUserData.h"
 
 using namespace concurrency;
@@ -37,6 +38,34 @@ namespace GameAnalytics
 		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
 		// For example, if the currency is "USD", the amount should be specified in cents.
 		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const;
+
+		// Sends the business event with the specified id to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
+		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.
+		// For all other virtual currency strings, you will need to create your custom dashboards and widgets.
+		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
+		// For example, if the currency is "USD", the amount should be specified in cents.
+		// Includes a string representing the cart (the location) from which the purchase was made, i.e. menu_shop or end_of_level_shop.
+		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType) const;
+
+		// Sends the business event with the specified id to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
+		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.
+		// For all other virtual currency strings, you will need to create your custom dashboards and widgets.
+		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
+		// For example, if the currency is "USD", the amount should be specified in cents.
+		// Includes a JSON object that contains a receipt and an optional signature. Used for payment validation of receipts.
+		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const;
+
+		// Sends the business event with the specified id to the GameAnalytics backend.
+		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
+		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.
+		// For all other virtual currency strings, you will need to create your custom dashboards and widgets.
+		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
+		// For example, if the currency is "USD", the amount should be specified in cents.
+		// Includes a string representing the cart (the location) from which the purchase was made, i.e. menu_shop or end_of_level_shop.
+		// Includes a JSON object that contains a receipt and an optional signature. Used for payment validation of receipts.
+		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const;
 
 		// Sends the design event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".
@@ -85,11 +114,17 @@ namespace GameAnalytics
 
 		std::shared_ptr<User> user;
 
-		// Builds an event object, adding GameAnalytics default annotations
+		// Builds the event object for business analytics events.
+		JsonObject^ BuildBusinessEventObject(const std::wstring & eventId, const std::wstring & currency, const int amount) const;
+
+		// Builds an event object, adding GameAnalytics default annotations.
 		JsonObject^ BuildEventObject(const std::wstring & category) const;
 
 		// Builds the event object for design analytics events.
 		JsonObject^ BuildDesignEventObject(const std::wstring & eventId) const;
+
+		// Builds an receipt info object, as used by some business events.
+		JsonObject^ BuildReceiptObject(const ReceiptInfo & receiptInfo) const;
 
 		// Generates a new GUID for the current session.
 		std::wstring GenerateSessionId() const;
@@ -118,6 +153,9 @@ namespace GameAnalytics
 
 		// Get the elapsed time since initialization, in seconds.
 		uint64 GetTimeSinceInit() const;
+
+		// Gets the number of the current transaction.
+		int GetTransactionNumber() const;
 
 		JsonValue^ ToJsonValue(std::wstring s) const;
 		JsonValue^ ToJsonValue(double d) const;
