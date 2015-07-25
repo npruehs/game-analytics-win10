@@ -142,6 +142,19 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
+void GameAnalyticsInterface::SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"resource");
+
+	auto eventId = ToWString(flowType) + L":" + ingameCurrency + L":" + itemType + L":" + itemId;
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
 {
 	// Store user data.

@@ -6,6 +6,7 @@
 
 #include "GameAnalyticsErrorSeverity.h"
 #include "GameAnalyticsReceiptInfo.h"
+#include "GameAnalyticsResourceFlowType.h"
 #include "GameAnalyticsUserData.h"
 
 using namespace concurrency;
@@ -78,6 +79,9 @@ namespace GameAnalytics
 		// Sends the error event with the specified message and severity to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Exception:NullReference".
 		void SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const;
+
+		// Sends the resource event with the specified flow type and currency and item data to the GameAnalytics backend.
+		void SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const;
 
 		// Sends the user event with the specified data to the GameAnalytics backend.
 		void SendUserEvent(const User & user) const;
