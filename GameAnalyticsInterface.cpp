@@ -16,7 +16,8 @@ using namespace Windows::Web::Http::Headers;
 using namespace Windows::Data::Json;
 
 GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey)
-	: httpClient(ref new Windows::Web::Http::HttpClient()),
+	: initialized(false), 
+	httpClient(ref new Windows::Web::Http::HttpClient()),
 	gameKey(gameKey),
 	secretKey(secretKey),
 	build(this->GetAppVersion()),
@@ -230,6 +231,13 @@ void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 
 JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & category) const
 {
+	// Check if initialized.
+	if (!this->initialized)
+	{
+		throw ref new Platform::FailureException("GameAnalytics has not been initialized yet. Call Init() first.");
+	}
+
+	// Build event object.
 	auto jsonObject = ref new JsonObject();
 
 	// Add category.
