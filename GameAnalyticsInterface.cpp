@@ -36,7 +36,7 @@ task<void> GameAnalyticsInterface::Init()
 	parameters.insert(std::pair<std::wstring, std::wstring>(L"sdk_version", L"win 2.0"));
 
 	// Send event.
-	return this->SendGameAnalyticsEvent(L"init", parameters).then([this](std::wstring response)
+	return this->SendGameAnalyticsEvent(L"init", std::wstring(), parameters).then([this](std::wstring response)
 	{
 		// Verify response.
 		if (response.find(L"\"enabled\":true") == std::string::npos)
@@ -66,7 +66,7 @@ void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, con
 	}
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"business", parameters);
+	this->SendGameAnalyticsEvent(L"events", L"business", parameters);
 }
 
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
@@ -75,7 +75,7 @@ void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 	auto parameters = this->BuildDesignParameterMap(eventId);
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"design", parameters);
+	this->SendGameAnalyticsEvent(L"events", L"design", parameters);
 }
 
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const float value) const
@@ -85,7 +85,7 @@ void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const
 	parameters.insert(std::pair<std::wstring, std::wstring>(L"value", std::to_wstring(value)));
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"design", parameters);
+	this->SendGameAnalyticsEvent(L"events", L"design", parameters);
 }
 
 void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const
@@ -101,7 +101,7 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 	}
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"error", parameters);
+	this->SendGameAnalyticsEvent(L"events", L"error", parameters);
 }
 
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
@@ -200,7 +200,7 @@ void GameAnalyticsInterface::SendUserEvent(const User & user) const
 	}
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"user", parameters);
+	this->SendGameAnalyticsEvent(L"events", L"user", parameters);
 }
 
 void GameAnalyticsInterface::SetArea(const std::wstring & area)
@@ -268,7 +268,7 @@ std::wstring GameAnalyticsInterface::GetHardwareId() const
 	return std::wstring(hardwareIdString->Data());
 }
 
-task<std::wstring> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
+task<std::wstring> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & route, const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
 {
 	// Build event JSON.
 	// http://support.gameanalytics.com/hc/en-us/articles/200841486-General-event-structure
@@ -281,6 +281,12 @@ task<std::wstring> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wst
 	json.append(L"\"user_id\":\"" + this->userId + L"\",");
 	json.append(L"\"session_id\":\"" + this->sessionId + L"\",");
 	json.append(L"\"build\":\"" + this->build + L"\"");
+
+	// Add category.
+	if (!category.empty())
+	{
+		json.append(L",\"category\":\"" + category + L"\"");
+	}
 
 	// Add category specific parameters.
 	for (auto it = parameters.begin(); it != parameters.end(); ++it)
@@ -304,7 +310,7 @@ task<std::wstring> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wst
 	auto hashedJsonBase64 = CryptographicBuffer::EncodeToBase64String(hashedJsonBuffer);
 
 	// Build category URL.
-	std::wstring relativeUrl = this->gameKey + L"/" + category;
+	std::wstring relativeUrl = this->gameKey + L"/" + route;
 	
 	// TODO: Replase by production URL http://api.gameanalytics.com/v2/
 	std::wstring absoluteUrl = L"http://sandbox-api.gameanalytics.com/v2/" + relativeUrl;

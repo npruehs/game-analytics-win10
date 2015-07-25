@@ -87,6 +87,6 @@ namespace GameAnalytics
 		std::wstring GetHardwareId() const;
 		
 		// Sends the event with the specified category and parameters to the GameAnalytics backend.
-		task<std::wstring> SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
+		task<std::wstring> SendGameAnalyticsEvent(const std::wstring & route, const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const;
 	};
 }
