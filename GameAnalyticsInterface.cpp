@@ -480,7 +480,7 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 {
 	// TODO: Add event queue, send reguarly, cache if offline.
 	// Build event JSON.
-	JsonArray^ jsonArray = ref new JsonArray();
+	auto jsonArray = ref new JsonArray();
 	jsonArray->Append(eventObject);
 
 	// Generate HMAC SHA256 of event data.
@@ -497,10 +497,10 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	auto hashedJsonBase64 = CryptographicBuffer::EncodeToBase64String(hashedJsonBuffer);
 
 	// Build category URL.
-	std::wstring relativeUrl = this->gameKey + L"/" + route;
+	auto relativeUrl = this->gameKey + L"/" + route;
 	
-	// TODO: Replase by production URL http://api.gameanalytics.com/v2/
-	std::wstring absoluteUrl = L"http://sandbox-api.gameanalytics.com/v2/" + relativeUrl;
+	// Sandbox URL: http://sandbox-api.gameanalytics.com/v2/
+	auto absoluteUrl = L"http://api.gameanalytics.com/v2/" + relativeUrl;
 	auto absoluteUrlString = ref new String(absoluteUrl.c_str());
 
 	// Send event to GameAnalytics.
@@ -522,7 +522,7 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 		response->EnsureSuccessStatusCode();
 		return create_task(response->Content->ReadAsStringAsync());
 	}).then([=](String^ responseBodyAsText){
-		JsonObject^ json = JsonObject::Parse(responseBodyAsText);
+		auto json = JsonObject::Parse(responseBodyAsText);
 		return json;
 	});
 }
