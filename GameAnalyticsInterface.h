@@ -180,13 +180,19 @@ namespace GameAnalytics
 		// Get the elapsed time since initialization, in seconds.
 		uint64 GetTimeSinceInit() const;
 
-		// Gets the number of the current transaction.
-		int GetTransactionNumber() const;
+		// Gets the number of the next transaction.
+		int GetNextTransactionNumber() const;
 
 		JsonValue^ ToJsonValue(std::wstring s) const;
 		JsonValue^ ToJsonValue(double d) const;
 
 		// Sends the specified event to the GameAnalytics backend.
 		task<JsonObject^> SendGameAnalyticsEvent(const std::wstring & route, JsonObject^ eventObject) const;
+
+		// Gets a locally stored integer value, or 0 if not found.
+		int GetStorageInt32OrDefault(Platform::String^ key) const;
+
+		// Sets a locally stored integer value.
+		void SetStorageInt32(Platform::String^ key, int value) const;
 	};
 }

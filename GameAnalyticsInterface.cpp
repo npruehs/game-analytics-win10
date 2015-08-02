@@ -32,21 +32,9 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 task<JsonObject^> GameAnalyticsInterface::Init()
 {
 	// Increase session counter.
-	auto localSettings = ApplicationData::Current->LocalSettings;
-	auto hasSessionCounter = localSettings->Values->HasKey("GameAnalytics::Session");
-
-	if (hasSessionCounter)
-	{
-		this->sessionNumber = safe_cast<IPropertyValue^>(localSettings->Values->Lookup("GameAnalytics::Session"))->GetInt32();
-	}
-	else
-	{
-		this->sessionNumber = 0;
-	}
-
+	this->sessionNumber = this->GetStorageInt32OrDefault("GameAnalytics::Session");
 	++this->sessionNumber;
-	
-	localSettings->Values->Insert("GameAnalytics::Session", dynamic_cast<PropertyValue^>(PropertyValue::CreateInt32(this->sessionNumber)));
+	this->SetStorageInt32("GameAnalytics::Session", this->sessionNumber);
 
 	// Build event object.
 	auto jsonObject = ref new JsonObject();
@@ -270,7 +258,7 @@ JsonObject^ GameAnalyticsInterface::BuildBusinessEventObject(const std::wstring 
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
 	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
 	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
-	jsonObject->Insert(L"transaction_num", this->ToJsonValue(this->GetTransactionNumber()));
+	jsonObject->Insert(L"transaction_num", this->ToJsonValue(this->GetNextTransactionNumber()));
 
 	return jsonObject;
 }
@@ -437,7 +425,7 @@ std::wstring GameAnalyticsInterface::GetManufacturer() const
 
 std::wstring GameAnalyticsInterface::GetOSVersion() const
 {
-	// TODO: Get correct OS version as soon as available in Windows Store app.s
+	// TODO: Get correct OS version as soon as available in Windows Store app.
 	// https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9270b1d2-50c0-4fb7-b20d-07d0451c04cb/how-to-get-the-os-version-in-metro-style-app
 	return L"unknown";
 }
@@ -470,10 +458,12 @@ uint64 GameAnalyticsInterface::GetTimeSinceInit() const
 	return (currentTime.QuadPart - this->initializationTime.QuadPart) / 10000000;
 }
 
-int GameAnalyticsInterface::GetTransactionNumber() const
+int GameAnalyticsInterface::GetNextTransactionNumber() const
 {
-	// TODO: Get correct transaction number.
-	return 1;
+	auto transactionNumber = this->GetStorageInt32OrDefault("GameAnalytics::Transaction");
+	++transactionNumber;
+	this->SetStorageInt32("GameAnalytics::Transaction", transactionNumber);
+	return transactionNumber;
 }
 
 JsonValue^ GameAnalyticsInterface::ToJsonValue(std::wstring s) const
@@ -535,4 +525,17 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 		JsonObject^ json = JsonObject::Parse(responseBodyAsText);
 		return json;
 	});
+}
+
+int GameAnalyticsInterface::GetStorageInt32OrDefault(Platform::String^ key) const
+{
+	auto localSettings = ApplicationData::Current->LocalSettings;
+	auto hasValue = localSettings->Values->HasKey(key);
+	return hasValue ? safe_cast<IPropertyValue^>(localSettings->Values->Lookup(key))->GetInt32() : 0;
+}
+
+void GameAnalyticsInterface::SetStorageInt32(Platform::String^ key, int value) const
+{
+	auto localSettings = ApplicationData::Current->LocalSettings;
+	localSettings->Values->Insert(key, dynamic_cast<PropertyValue^>(PropertyValue::CreateInt32(value)));
 }
