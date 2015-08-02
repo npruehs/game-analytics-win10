@@ -432,8 +432,8 @@ std::wstring GameAnalyticsInterface::GetOSVersion() const
 
 std::wstring GameAnalyticsInterface::GetPlatform() const
 {
-	// TODO: Get correct platform.
-	return L"win8";
+	// TODO: Get correct platform as soon as ported to UWP.
+	return L"windows";
 }
 
 int GameAnalyticsInterface::GetSessionNumber() const
@@ -443,7 +443,7 @@ int GameAnalyticsInterface::GetSessionNumber() const
 
 std::wstring GameAnalyticsInterface::GetSDKVersion() const
 {
-	return L"win 2.0";
+	return L"rest api v2";
 }
 
 uint64 GameAnalyticsInterface::GetTimeSinceInit() const
