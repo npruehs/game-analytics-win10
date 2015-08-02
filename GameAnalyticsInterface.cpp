@@ -8,12 +8,14 @@ using namespace GameAnalytics;
 
 using namespace concurrency;
 using namespace Platform;
+using namespace Windows::Data::Json;
 using namespace Windows::Foundation;
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
+using namespace Windows::Storage;
 using namespace Windows::Web::Http;
 using namespace Windows::Web::Http::Headers;
-using namespace Windows::Data::Json;
+
 
 GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey)
 	: initialized(false), 
@@ -29,6 +31,23 @@ GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, con
 
 task<JsonObject^> GameAnalyticsInterface::Init()
 {
+	// Increase session counter.
+	auto localSettings = ApplicationData::Current->LocalSettings;
+	auto hasSessionCounter = localSettings->Values->HasKey("GameAnalytics::Session");
+
+	if (hasSessionCounter)
+	{
+		this->sessionNumber = safe_cast<IPropertyValue^>(localSettings->Values->Lookup("GameAnalytics::Session"))->GetInt32();
+	}
+	else
+	{
+		this->sessionNumber = 0;
+	}
+
+	++this->sessionNumber;
+	
+	localSettings->Values->Insert("GameAnalytics::Session", dynamic_cast<PropertyValue^>(PropertyValue::CreateInt32(this->sessionNumber)));
+
 	// Build event object.
 	auto jsonObject = ref new JsonObject();
 
@@ -356,7 +375,7 @@ JsonObject^ GameAnalyticsInterface::BuildReceiptObject(const ReceiptInfo & recei
 	receiptObject->Insert(L"receipt", this->ToJsonValue(receiptInfo.receipt));
 	
 	// TODO: Set correct store as soon as available in GameAnalytics.
-	receiptObject->Insert(L"store", this->ToJsonValue(L"windows_phone"));
+	receiptObject->Insert(L"store", this->ToJsonValue(L"unknown"));
 
 	if (!receiptInfo.signature.empty())
 	{
@@ -418,8 +437,9 @@ std::wstring GameAnalyticsInterface::GetManufacturer() const
 
 std::wstring GameAnalyticsInterface::GetOSVersion() const
 {
-	// TODO: Get correct OS version.
-	return L"win 8.1";
+	// TODO: Get correct OS version as soon as available in Windows Store app.s
+	// https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9270b1d2-50c0-4fb7-b20d-07d0451c04cb/how-to-get-the-os-version-in-metro-style-app
+	return L"unknown";
 }
 
 std::wstring GameAnalyticsInterface::GetPlatform() const
@@ -430,8 +450,7 @@ std::wstring GameAnalyticsInterface::GetPlatform() const
 
 int GameAnalyticsInterface::GetSessionNumber() const
 {
-	// TODO: Get correct session number.
-	return 1;
+	return this->sessionNumber;
 }
 
 std::wstring GameAnalyticsInterface::GetSDKVersion() const

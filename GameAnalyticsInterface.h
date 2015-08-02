@@ -129,6 +129,7 @@ namespace GameAnalytics
 
 		std::wstring build;
 		std::wstring sessionId;
+		int sessionNumber;
 		std::wstring userId;
 
 		std::shared_ptr<User> user;
