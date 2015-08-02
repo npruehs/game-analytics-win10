@@ -154,6 +154,9 @@ namespace GameAnalytics
 		// Gets the app package version.
 		std::wstring GetAppVersion() const;
 
+		// Gets the model of the device this app runs on.
+		std::wstring GetDeviceModel() const;
+
 		// Gets the Application Specific Hardware Identifier (ASHWID).
 		// See https://msdn.microsoft.com/en-us/library/windows/apps/jj553431
 		std::wstring GetHardwareId() const;

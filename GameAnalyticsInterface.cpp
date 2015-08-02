@@ -270,8 +270,8 @@ JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & catego
 	// Add category.
 	jsonObject->Insert(L"category", this->ToJsonValue(category));
 
-	// TODO: Get device model.
-	jsonObject->Insert(L"device", this->ToJsonValue(L"unknown"));
+	// Add device model.
+	jsonObject->Insert(L"device", this->ToJsonValue(this->GetDeviceModel()));
 
 	// Add GameAnalytics API version.
 	jsonObject->Insert(L"v", this->ToJsonValue(2));
@@ -395,6 +395,12 @@ std::wstring GameAnalyticsInterface::GetAppVersion() const
 		+ L"." + std::to_wstring(version.Revision));
 }
 
+std::wstring GameAnalyticsInterface::GetDeviceModel() const
+{
+	auto info = ref new Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation();
+	return std::wstring(info->SystemProductName->Data());
+}
+
 std::wstring GameAnalyticsInterface::GetHardwareId() const
 {
 	auto packageSpecificToken = Windows::System::Profile::HardwareIdentification::GetPackageSpecificToken(nullptr);
@@ -405,9 +411,10 @@ std::wstring GameAnalyticsInterface::GetHardwareId() const
 
 std::wstring GameAnalyticsInterface::GetManufacturer() const
 {
-	// TODO: Get manufacturer.
-	return L"unknown";
+	auto info = ref new Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation();
+	return std::wstring(info->SystemManufacturer->Data());
 }
+
 
 std::wstring GameAnalyticsInterface::GetOSVersion() const
 {
@@ -462,6 +469,7 @@ JsonValue^ GameAnalyticsInterface::ToJsonValue(double d) const
 
 task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & route, JsonObject^ eventObject) const
 {
+	// TODO: Add event queue, send reguarly, cache if offline.
 	// Build event JSON.
 	JsonArray^ jsonArray = ref new JsonArray();
 	jsonArray->Append(eventObject);
@@ -470,6 +478,7 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	auto jsonString = jsonArray->Stringify();
 	auto secretKeyString = ref new String(this->secretKey.c_str());
 
+	// TODO: Add compression.
 	auto alg = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha256);
 	auto jsonBuffer = CryptographicBuffer::ConvertStringToBinary(jsonString, BinaryStringEncoding::Utf8);
 	auto secretKeyBuffer = CryptographicBuffer::ConvertStringToBinary(secretKeyString, BinaryStringEncoding::Utf8);
