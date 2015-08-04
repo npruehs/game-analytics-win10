@@ -547,9 +547,23 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	return create_task(httpClient->SendRequestAsync(message)).then([=](HttpResponseMessage^ response)
 	{
 		// Validate HTTP status code.
+		if (response->StatusCode == HttpStatusCode::BadRequest)
+		{
+			// Show error.
+			auto error = response->Content->ToString();
+			auto jsonArray = JsonArray::Parse(error);
+			auto jsonResponse = jsonArray->GetObjectAt(0);
+			auto jsonErrors = jsonResponse->GetNamedArray("errors");
+			auto jsonError = jsonErrors->GetObjectAt(0);
+			throw ref new Platform::FailureException(jsonError->Stringify());
+		}
+
+		// Default handling.
 		response->EnsureSuccessStatusCode();
+
 		return create_task(response->Content->ReadAsStringAsync());
 	}).then([=](String^ responseBodyAsText){
+		// Return response.
 		auto json = JsonObject::Parse(responseBodyAsText);
 		return json;
 	});
