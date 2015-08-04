@@ -149,8 +149,18 @@ void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const 
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
-void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId)
 {
+	// Update progression status.
+	if (status == ProgressionStatus::ProgressionStatus::Start)
+	{
+		this->progression = eventId;
+	}
+	else
+	{
+		this->progression = std::wstring();
+	}
+
 	// Build event object.
 	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
 
@@ -158,8 +168,18 @@ void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::Progr
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
-void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score) const
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score)
 {
+	// Update progression status.
+	if (status == ProgressionStatus::ProgressionStatus::Start)
+	{
+		this->progression = eventId;
+	}
+	else
+	{
+		this->progression = std::wstring();
+	}
+
 	// Build event object.
 	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
 	jsonObject->Insert(L"score", this->ToJsonValue(score));
@@ -335,6 +355,12 @@ JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & catego
 	// Add build.
 	jsonObject->Insert(L"build", this->ToJsonValue(this->build));
 
+	// Add progression.
+	if (!this->progression.empty())
+	{
+		jsonObject->Insert(L"progression", this->ToJsonValue(this->progression));
+	}
+
 	return jsonObject;
 }
 
@@ -352,6 +378,8 @@ JsonObject^ GameAnalyticsInterface::BuildProgressionEventObject(const Progressio
 
 	auto eventIdString = ToWString(status) + L":" + eventId;
 	jsonObject->Insert(L"event_id", this->ToJsonValue(eventIdString));
+
+	// TODO: Add current attempt number.
 
 	return jsonObject;
 }

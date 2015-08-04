@@ -83,12 +83,14 @@ namespace GameAnalytics
 
 		// Sends the progression event with the specified status to the GameAnalytics backend.
 		// Progress event id can consist of 1-3 parts: Progression1:Progression2:Progression3.
-		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const;
+		// Stores the event id, associating further events with the current attempt.
+		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId);
 
 		// Sends the progression event with the specified status to the GameAnalytics backend.
 		// Progress event id can consist of 1-3 parts: Progression1:Progression2:Progression3.
+		// Stores the event id, associating further events with the current attempt.
 		// Includes player score for the attempt. Use with status "Fail" or "Complete" only.
-		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score) const;
+		void SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score);
 
 		// Sends the resource event with the specified flow type and currency and item data to the GameAnalytics backend.
 		void SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const;
@@ -131,6 +133,7 @@ namespace GameAnalytics
 		std::wstring sessionId;
 		int sessionNumber;
 		std::wstring userId;
+		std::wstring progression;
 
 		std::shared_ptr<User> user;
 
