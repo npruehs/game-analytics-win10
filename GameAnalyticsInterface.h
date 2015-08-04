@@ -50,6 +50,8 @@ namespace GameAnalytics
 		// Includes a string representing the cart (the location) from which the purchase was made, i.e. menu_shop or end_of_level_shop.
 		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType) const;
 
+		// TODO: Enable as soon as supported by GameAnalytics.
+
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
 		// Check http://support.gameanalytics.com/hc/en-us/articles/200841576-Supported-currencies for a list of currencies that will populate the monetization dashboard.
@@ -57,7 +59,7 @@ namespace GameAnalytics
 		// The amount is a numeric value which corresponds to the cost of the purchase in the monetary unit multiplied by 100.
 		// For example, if the currency is "USD", the amount should be specified in cents.
 		// Includes a JSON object that contains a receipt and an optional signature. Used for payment validation of receipts.
-		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const;
+		//void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const;
 
 		// Sends the business event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "Purchase:RocketLauncher".
@@ -67,7 +69,7 @@ namespace GameAnalytics
 		// For example, if the currency is "USD", the amount should be specified in cents.
 		// Includes a string representing the cart (the location) from which the purchase was made, i.e. menu_shop or end_of_level_shop.
 		// Includes a JSON object that contains a receipt and an optional signature. Used for payment validation of receipts.
-		void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const;
+		//void SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const;
 
 		// Sends the design event with the specified id to the GameAnalytics backend.
 		// Event ids can be sub-categorized by using ":" notation, for example "PickedUpAmmo:Shotgun".

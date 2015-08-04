@@ -93,30 +93,31 @@ void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, con
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
-void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const
-{
-	// Build event object.
-	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
-	auto receiptObject = this->BuildReceiptObject(receiptInfo);
-
-	jsonObject->Insert(L"receipt_info", receiptObject);
-
-	// Send event.
-	this->SendGameAnalyticsEvent(L"events", jsonObject);
-}
-
-void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const
-{
-	// Build event object.
-	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
-	auto receiptObject = this->BuildReceiptObject(receiptInfo);
-
-	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
-	jsonObject->Insert(L"receipt_info", receiptObject);
-
-	// Send event.
-	this->SendGameAnalyticsEvent(L"events", jsonObject);
-}
+// TODO: Enable as soon as supported by GameAnalytics.
+//void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const
+//{
+//	// Build event object.
+//	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+//	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+//
+//	jsonObject->Insert(L"receipt_info", receiptObject);
+//
+//	// Send event.
+//	this->SendGameAnalyticsEvent(L"events", jsonObject);
+//}
+//
+//void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const
+//{
+//	// Build event object.
+//	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+//	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+//
+//	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
+//	jsonObject->Insert(L"receipt_info", receiptObject);
+//
+//	// Send event.
+//	this->SendGameAnalyticsEvent(L"events", jsonObject);
+//}
 
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 {
