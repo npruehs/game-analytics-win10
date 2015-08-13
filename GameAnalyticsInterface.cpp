@@ -2,7 +2,6 @@
 
 #include "GameAnalyticsInterface.h"
 
-#include <ppltasks.h>
 
 using namespace GameAnalytics;
 
