@@ -170,22 +170,24 @@ void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::Progr
 
 void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score)
 {
-	// Update progression status.
 	if (status == ProgressionStatus::ProgressionStatus::Start)
 	{
+		// Update progression status.
 		this->progression = eventId;
 	}
-	else
-	{
-		this->progression = std::wstring();
-	}
-
+	
 	// Build event object.
 	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
 	jsonObject->Insert(L"score", this->ToJsonValue(score));
 
 	// Send event.
 	this->SendGameAnalyticsEvent(L"events", jsonObject);
+
+	if (status != ProgressionStatus::ProgressionStatus::Start)
+	{
+		// Reset progression status.
+		this->progression = std::wstring();
+	}
 }
 
 void GameAnalyticsInterface::SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const
@@ -528,6 +530,7 @@ task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstr
 	auto relativeUrl = this->gameKey + L"/" + route;
 	
 	// Sandbox URL: http://sandbox-api.gameanalytics.com/v2/
+	// Production URL: http://api.gameanalytics.com/v2/
 	auto absoluteUrl = L"http://api.gameanalytics.com/v2/" + relativeUrl;
 	auto absoluteUrlString = ref new String(absoluteUrl.c_str());
 
