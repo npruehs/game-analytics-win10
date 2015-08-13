@@ -17,14 +17,11 @@ namespace GameAnalytics
 		{
 			switch (gender)
 			{
-			case Unknown:
-				return L"Unknown";
-
 			case Male:
-				return L"M";
+				return L"male";
 
 			case Female:
-				return L"F";
+				return L"female";
 			}
 
 			// Unknown gender value.

@@ -2,183 +2,251 @@
 
 #include "GameAnalyticsInterface.h"
 
-#include <ppltasks.h>
+#include <Windows.h>
 
 using namespace GameAnalytics;
 
 using namespace concurrency;
 using namespace Platform;
+using namespace Windows::Data::Json;
 using namespace Windows::Foundation;
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
+using namespace Windows::Storage;
 using namespace Windows::Web::Http;
 using namespace Windows::Web::Http::Headers;
 
 
 GameAnalyticsInterface::GameAnalyticsInterface(const std::wstring & gameKey, const std::wstring & secretKey)
-	: httpClient(ref new Windows::Web::Http::HttpClient()),
+	: initialized(false), 
+	httpClient(ref new Windows::Web::Http::HttpClient()),
 	gameKey(gameKey),
 	secretKey(secretKey),
 	build(this->GetAppVersion()),
 	sessionId(this->GenerateSessionId()),
-	userId(this->GetHardwareId())
+	userId(this->GetHardwareId()),
+	user(std::make_shared<User>())
 {
+}
+
+task<JsonObject^> GameAnalyticsInterface::Init()
+{
+	// Increase session counter.
+	this->sessionNumber = this->GetStorageInt32OrDefault("GameAnalytics::Session");
+	++this->sessionNumber;
+	this->SetStorageInt32("GameAnalytics::Session", this->sessionNumber);
+
+	// Build event object.
+	auto jsonObject = ref new JsonObject();
+
+	jsonObject->Insert(L"platform", this->ToJsonValue(this->GetPlatform()));
+	jsonObject->Insert(L"os_version", this->ToJsonValue(this->GetOSVersion()));
+	jsonObject->Insert(L"sdk_version", this->ToJsonValue(this->GetSDKVersion()));
+
+	// Send event.
+	return this->SendGameAnalyticsEvent(L"init", jsonObject).then([this](JsonObject^ response)
+	{
+		// Verify response.
+		auto enabled = response->GetNamedBoolean(L"enabled");
+
+		if (!enabled)
+		{
+			auto message = L"Error initializing GameAnalytics.";
+			auto messageString = ref new Platform::String(message);
+			throw ref new Platform::FailureException(messageString);
+		}
+
+		// Set server timestamp.
+		this->initialized = true;
+		this->serverTimestamp = response->GetNamedNumber(L"server_ts");
+
+		if (!QueryPerformanceCounter(&this->initializationTime))
+		{
+			throw ref new Platform::FailureException("Unable to get system time.");
+		}
+
+		return response;
+	});
+}
+
+bool GameAnalyticsInterface::IsInitialized() const
+{
+	return this->initialized;
 }
 
 void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
-	// Build parameter map.
-	auto parameters = std::map<std::wstring, std::wstring>();
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"event_id", eventId));
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"currency", currency));
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"amount", std::to_wstring(amount)));
-
-	if (!this->area.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
-	}
+	// Build event object.
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"business", parameters);
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
+
+void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+// TODO: Enable as soon as supported by GameAnalytics.
+//void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const ReceiptInfo & receiptInfo) const
+//{
+//	// Build event object.
+//	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+//	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+//
+//	jsonObject->Insert(L"receipt_info", receiptObject);
+//
+//	// Send event.
+//	this->SendGameAnalyticsEvent(L"events", jsonObject);
+//}
+//
+//void GameAnalyticsInterface::SendBusinessEvent(const std::wstring & eventId, const std::wstring & currency, const int amount, const std::wstring & cartType, const ReceiptInfo & receiptInfo) const
+//{
+//	// Build event object.
+//	auto jsonObject = this->BuildBusinessEventObject(eventId, currency, amount);
+//	auto receiptObject = this->BuildReceiptObject(receiptInfo);
+//
+//	jsonObject->Insert(L"cart_type", this->ToJsonValue(cartType));
+//	jsonObject->Insert(L"receipt_info", receiptObject);
+//
+//	// Send event.
+//	this->SendGameAnalyticsEvent(L"events", jsonObject);
+//}
 
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId) const
 {
-	// Build parameter map.
-	auto parameters = this->BuildDesignParameterMap(eventId);
+	// Build event object.
+	auto jsonObject = this->BuildDesignEventObject(eventId);
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"design", parameters);
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
 void GameAnalyticsInterface::SendDesignEvent(const std::wstring & eventId, const float value) const
 {
-	// Build parameter map.
-	auto parameters = this->BuildDesignParameterMap(eventId);
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"value", std::to_wstring(value)));
+	// Build event object.
+	auto jsonObject = this->BuildDesignEventObject(eventId);
+	jsonObject->Insert(L"value", this->ToJsonValue(value));
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"design", parameters);
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
 void GameAnalyticsInterface::SendErrorEvent(const std::wstring & message, const Severity::Severity severity) const
 {
-	// Build parameter map.
-	auto parameters = std::map<std::wstring, std::wstring>();
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"message", message));
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"severity", Severity::ToWString(severity)));
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"error");
 
-	if (!this->area.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
-	}
+	jsonObject->Insert(L"message", this->ToJsonValue(message));
+	jsonObject->Insert(L"severity", this->ToJsonValue(Severity::ToWString(severity)));
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"error", parameters);
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId)
+{
+	// Update progression status.
+	if (status == ProgressionStatus::ProgressionStatus::Start)
+	{
+		this->progression = eventId;
+	}
+	else
+	{
+		this->progression = std::wstring();
+	}
+
+	// Build event object.
+	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendProgressionEvent(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId, const int score)
+{
+	if (status == ProgressionStatus::ProgressionStatus::Start)
+	{
+		// Update progression status.
+		this->progression = eventId;
+	}
+	
+	// Build event object.
+	auto jsonObject = this->BuildProgressionEventObject(status, eventId);
+	jsonObject->Insert(L"score", this->ToJsonValue(score));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+
+	if (status != ProgressionStatus::ProgressionStatus::Start)
+	{
+		// Reset progression status.
+		this->progression = std::wstring();
+	}
+}
+
+void GameAnalyticsInterface::SendResourceEvent(const FlowType::FlowType flowType, const std::wstring & ingameCurrency, const std::wstring & itemType, const std::wstring & itemId, float amount) const
+{
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"resource");
+
+	auto eventId = ToWString(flowType) + L":" + ingameCurrency + L":" + itemType + L":" + itemId;
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
+}
+
+void GameAnalyticsInterface::SendSessionEndEvent() const
+{
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"session_end");
+	jsonObject->Insert(L"length", this->ToJsonValue(this->GetTimeSinceInit()));
+
+	// Send event.
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
 void GameAnalyticsInterface::SendUserEvent(const User & user) const
 {
-	// Build parameter map.
-	auto parameters = std::map<std::wstring, std::wstring>();
-
-	if (user.gender != Gender::Unknown)
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"gender", Gender::ToWString(user.gender)));
-	}
-
+	// Store user data.
 	if (user.birthYear >= 0)
 	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"birth_year", std::to_wstring(user.birthYear)));
-	}
-
-	if (user.friendCount >= 0)
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"friend_count", std::to_wstring(user.friendCount)));
+		this->user->birthYear = user.birthYear;
 	}
 
 	if (!user.facebookId.empty())
 	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"facebook_id", user.facebookId));
+		this->user->facebookId = user.facebookId;
+	}
+
+	if (user.gender != Gender::Unknown)
+	{
+		this->user->gender = user.gender;
 	}
 
 	if (!user.googlePlusId.empty())
 	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"googleplus_id", user.googlePlusId));
+		this->user->googlePlusId = user.googlePlusId;
 	}
 
-	if (!user.iOSId.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"ios_id", user.iOSId));
-	}
-
-	if (!user.androidId.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"android_id", user.androidId));
-	}
-
-	if (!user.adTruthId.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"adtruth_id", user.adTruthId));
-	}
-
-	if (!user.platform.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"platform", user.platform));
-	}
-
-	if (!user.device.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"device", user.device));
-	}
-
-	if (!user.osMajor.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"os_major", user.osMajor));
-	}
-
-	if (!user.osMinor.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"os_minor", user.osMinor));
-	}
-
-	if (!user.installPublisher.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_publisher", user.installPublisher));
-	}
-
-	if (!user.installSite.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_site", user.installSite));
-	}
-
-	if (!user.installCampaign.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_campaign", user.installCampaign));
-	}
-
-	if (!user.installAdGroup.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_adgroup", user.installAdGroup));
-	}
-
-	if (!user.installAd.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_ad", user.installAd));
-	}
-
-	if (!user.installKeyword.empty())
-	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"install_keyword", user.installKeyword));
-	}
+	// Build event object.
+	auto jsonObject = this->BuildEventObject(L"user");
 
 	// Send event.
-	this->SendGameAnalyticsEvent(L"user", parameters);
+	this->SendGameAnalyticsEvent(L"events", jsonObject);
 }
 
-void GameAnalyticsInterface::SetArea(const std::wstring & area)
+void GameAnalyticsInterface::SetBirthYear(const int birthYear)
 {
-	this->area = area;
+	this->user->birthYear = birthYear;
 }
 
 void GameAnalyticsInterface::SetBuild(const std::wstring & build)
@@ -186,22 +254,154 @@ void GameAnalyticsInterface::SetBuild(const std::wstring & build)
 	this->build = build;
 }
 
+void GameAnalyticsInterface::SetFacebookId(const std::wstring & facebookId)
+{
+	this->user->facebookId = facebookId;
+}
+
+void GameAnalyticsInterface::SetGender(const Gender::Gender gender)
+{
+	this->user->gender = gender;
+}
+
+void GameAnalyticsInterface::SetGooglePlusId(const std::wstring & googlePlusId)
+{
+	this->user->googlePlusId = googlePlusId;
+}
+
 void GameAnalyticsInterface::SetUserId(const std::wstring & userId)
 {
 	this->userId = userId;
 }
 
-std::map<std::wstring, std::wstring> GameAnalyticsInterface::BuildDesignParameterMap(const std::wstring & eventId) const
+JsonObject^ GameAnalyticsInterface::BuildBusinessEventObject(const std::wstring & eventId, const std::wstring & currency, const int amount) const
 {
-	auto parameters = std::map<std::wstring, std::wstring>();
-	parameters.insert(std::pair<std::wstring, std::wstring>(L"event_id", eventId));
+	auto jsonObject = this->BuildEventObject(L"business");
 
-	if (!this->area.empty())
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+	jsonObject->Insert(L"currency", this->ToJsonValue(currency));
+	jsonObject->Insert(L"amount", this->ToJsonValue(amount));
+	jsonObject->Insert(L"transaction_num", this->ToJsonValue(this->GetNextTransactionNumber()));
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildEventObject(const std::wstring & category) const
+{
+	// Check if initialized.
+	if (!this->initialized)
 	{
-		parameters.insert(std::pair<std::wstring, std::wstring>(L"area", area));
+		throw ref new Platform::FailureException("GameAnalytics has not been initialized yet. Call Init() first.");
 	}
 
-	return parameters;
+	// Build event object.
+	auto jsonObject = ref new JsonObject();
+
+	// Add category.
+	jsonObject->Insert(L"category", this->ToJsonValue(category));
+
+	// Add device model.
+	jsonObject->Insert(L"device", this->ToJsonValue(this->GetDeviceModel()));
+
+	// Add GameAnalytics API version.
+	jsonObject->Insert(L"v", this->ToJsonValue(2));
+
+	// Add user id.
+	jsonObject->Insert(L"user_id", this->ToJsonValue(this->userId));
+
+	// Add timestamp.
+	auto clientTimestamp = this->serverTimestamp + this->GetTimeSinceInit();
+	jsonObject->Insert(L"client_ts", this->ToJsonValue(clientTimestamp));
+
+	// Add SDK version.
+	jsonObject->Insert(L"sdk_version", this->ToJsonValue(this->GetSDKVersion()));
+
+	// Add OS version.
+	jsonObject->Insert(L"os_version", this->ToJsonValue(this->GetOSVersion()));
+
+	// Add manufacturer.
+	jsonObject->Insert(L"manufacturer", this->ToJsonValue(this->GetManufacturer()));
+
+	// Add platform.
+	jsonObject->Insert(L"platform", this->ToJsonValue(this->GetPlatform()));
+
+	// Add session ID.
+	jsonObject->Insert(L"session_id", this->ToJsonValue(this->sessionId));
+
+	// Add session number.
+	jsonObject->Insert(L"session_num", this->ToJsonValue(this->GetSessionNumber()));
+
+	// Add Google+ id.
+	if (!this->user->googlePlusId.empty())
+	{
+		jsonObject->Insert(L"googleplus_id", this->ToJsonValue(this->user->googlePlusId));
+	}
+
+	// Add Facebook id.
+	if (!this->user->facebookId.empty())
+	{
+		jsonObject->Insert(L"facebook_id", this->ToJsonValue(this->user->facebookId));
+	}
+
+	// Add gender.
+	if (this->user->gender != Gender::Unknown)
+	{
+		jsonObject->Insert(L"gender", this->ToJsonValue(Gender::ToWString(this->user->gender)));
+	}
+
+	// Add birthyear.
+	if (this->user->birthYear >= 0)
+	{
+		jsonObject->Insert(L"birth_year", this->ToJsonValue(this->user->birthYear));
+	}
+
+	// Add build.
+	jsonObject->Insert(L"build", this->ToJsonValue(this->build));
+
+	// Add progression.
+	if (!this->progression.empty())
+	{
+		jsonObject->Insert(L"progression", this->ToJsonValue(this->progression));
+	}
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildDesignEventObject(const std::wstring & eventId) const
+{
+	auto jsonObject = this->BuildEventObject(L"design");
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventId));
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildProgressionEventObject(const ProgressionStatus::ProgressionStatus status, const std::wstring & eventId) const
+{
+	auto jsonObject = this->BuildEventObject(L"progression");
+
+	auto eventIdString = ToWString(status) + L":" + eventId;
+	jsonObject->Insert(L"event_id", this->ToJsonValue(eventIdString));
+
+	// TODO: Add current attempt number.
+
+	return jsonObject;
+}
+
+JsonObject^ GameAnalyticsInterface::BuildReceiptObject(const ReceiptInfo & receiptInfo) const
+{
+	auto receiptObject = ref new JsonObject();
+
+	receiptObject->Insert(L"receipt", this->ToJsonValue(receiptInfo.receipt));
+	
+	// TODO: Set correct store as soon as available in GameAnalytics.
+	receiptObject->Insert(L"store", this->ToJsonValue(L"unknown"));
+
+	if (!receiptInfo.signature.empty())
+	{
+		receiptObject->Insert(L"signature", this->ToJsonValue(receiptInfo.signature));
+	}
+
+	return receiptObject;
 }
 
 std::wstring GameAnalyticsInterface::GenerateSessionId() const
@@ -233,6 +433,12 @@ std::wstring GameAnalyticsInterface::GetAppVersion() const
 		+ L"." + std::to_wstring(version.Revision));
 }
 
+std::wstring GameAnalyticsInterface::GetDeviceModel() const
+{
+	auto info = ref new Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation();
+	return std::wstring(info->SystemProductName->Data());
+}
+
 std::wstring GameAnalyticsInterface::GetHardwareId() const
 {
 	auto packageSpecificToken = Windows::System::Profile::HardwareIdentification::GetPackageSpecificToken(nullptr);
@@ -241,41 +447,91 @@ std::wstring GameAnalyticsInterface::GetHardwareId() const
 	return std::wstring(hardwareIdString->Data());
 }
 
-void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & category, const std::map<std::wstring, std::wstring> & parameters) const
+std::wstring GameAnalyticsInterface::GetManufacturer() const
 {
-	// Build event JSON.
-	// http://support.gameanalytics.com/hc/en-us/articles/200841486-General-event-structure
-	// http://support.gameanalytics.com/hc/en-us/articles/200841506-Design-event-structure
+	auto info = ref new Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation();
+	return std::wstring(info->SystemManufacturer->Data());
+}
 
-	std::wstring json = L"[";
-	json.append(L"{");
 
-	// Add header.
-	json.append(L"\"user_id\":\"" + this->userId + L"\",");
-	json.append(L"\"session_id\":\"" + this->sessionId + L"\",");
-	json.append(L"\"build\":\"" + this->build + L"\"");
+std::wstring GameAnalyticsInterface::GetOSVersion() const
+{
+	auto deviceFamily = Windows::System::Profile::AnalyticsInfo::VersionInfo->DeviceFamily;
+	return (deviceFamily == "Windows.Desktop") ? L"windows 10" : L"windows_phone 10";
+}
 
-	// Add category specific parameters.
-	for (auto it = parameters.begin(); it != parameters.end(); ++it)
+std::wstring GameAnalyticsInterface::GetPlatform() const
+{
+	// TODO: Get correct platform as soon as ported to UWP.
+	return L"windows";
+}
+
+int GameAnalyticsInterface::GetSessionNumber() const
+{
+	return this->sessionNumber;
+}
+
+std::wstring GameAnalyticsInterface::GetSDKVersion() const
+{
+	return L"rest api v2";
+}
+
+uint64 GameAnalyticsInterface::GetTimeSinceInit() const
+{
+	LARGE_INTEGER currentTime;
+
+	if (!QueryPerformanceCounter(&currentTime))
 	{
-		json.append(L",\"" + it->first + L"\":\"" + it->second + L"\"");
+		throw ref new Platform::FailureException(L"Unable to get system time.");
 	}
 
-	json.append(L"}");
-	json.append(L"]");
+	return (currentTime.QuadPart - this->initializationTime.QuadPart) / 10000000;
+}
 
-	// Generate MD5 of event data and secret key.
-	auto jsonAndSecretKey = json + this->secretKey;
-	auto jsonAndSecretKeyString = ref new String(jsonAndSecretKey.c_str());
+int GameAnalyticsInterface::GetNextTransactionNumber() const
+{
+	auto transactionNumber = this->GetStorageInt32OrDefault("GameAnalytics::Transaction");
+	++transactionNumber;
+	this->SetStorageInt32("GameAnalytics::Transaction", transactionNumber);
+	return transactionNumber;
+}
 
-	auto alg = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Md5);
-	auto buff = CryptographicBuffer::ConvertStringToBinary(jsonAndSecretKeyString, BinaryStringEncoding::Utf8);
-	auto hashed = alg->HashData(buff);
-	auto digest = CryptographicBuffer::EncodeToHexString(hashed);
+JsonValue^ GameAnalyticsInterface::ToJsonValue(std::wstring s) const
+{
+	return JsonValue::CreateStringValue(ref new String(s.c_str()));
+}
+
+JsonValue^ GameAnalyticsInterface::ToJsonValue(double d) const
+{
+	return JsonValue::CreateNumberValue(d);
+}
+
+task<JsonObject^> GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & route, JsonObject^ eventObject) const
+{
+	// TODO: Add event queue, send reguarly, cache if offline.
+	// Build event JSON.
+	auto jsonArray = ref new JsonArray();
+	jsonArray->Append(eventObject);
+
+	// Generate HMAC SHA256 of event data.
+	auto jsonString = jsonArray->Stringify();
+	auto secretKeyString = ref new String(this->secretKey.c_str());
+
+	// TODO: Add compression.
+	auto alg = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha256);
+	auto jsonBuffer = CryptographicBuffer::ConvertStringToBinary(jsonString, BinaryStringEncoding::Utf8);
+	auto secretKeyBuffer = CryptographicBuffer::ConvertStringToBinary(secretKeyString, BinaryStringEncoding::Utf8);
+	auto hmacKey = alg->CreateKey(secretKeyBuffer);
+
+	auto hashedJsonBuffer = CryptographicEngine::Sign(hmacKey, jsonBuffer);
+	auto hashedJsonBase64 = CryptographicBuffer::EncodeToBase64String(hashedJsonBuffer);
 
 	// Build category URL.
-	std::wstring relativeUrl = this->gameKey + L"/" + category;
-	std::wstring absoluteUrl = L"http://api.gameanalytics.com/1/" + relativeUrl;
+	auto relativeUrl = this->gameKey + L"/" + route;
+	
+	// Sandbox URL: http://sandbox-api.gameanalytics.com/v2/
+	// Production URL: http://api.gameanalytics.com/v2/
+	auto absoluteUrl = L"http://api.gameanalytics.com/v2/" + relativeUrl;
 	auto absoluteUrlString = ref new String(absoluteUrl.c_str());
 
 	// Send event to GameAnalytics.
@@ -284,27 +540,47 @@ void GameAnalyticsInterface::SendGameAnalyticsEvent(const std::wstring & categor
 	message->RequestUri = ref new Uri(absoluteUrlString);
 	message->Method = HttpMethod::Post;
 	message->Content = ref new HttpStringContent
-		(ref new Platform::String(json.c_str()),
+		(jsonString,
 		Windows::Storage::Streams::UnicodeEncoding::Utf8,
 		ref new Platform::String(L"application/json"));
-	message->Headers->TryAppendWithoutValidation(L"Authorization", digest);
+	message->Headers->TryAppendWithoutValidation(L"Authorization", hashedJsonBase64);
 
 	auto response = ref new HttpResponseMessage();
 
-	create_task(httpClient->SendRequestAsync(message)).then([=](HttpResponseMessage^ response)
+	return create_task(httpClient->SendRequestAsync(message)).then([=](HttpResponseMessage^ response)
 	{
 		// Validate HTTP status code.
+		if (response->StatusCode == HttpStatusCode::BadRequest)
+		{
+			// Show error.
+			auto error = response->Content->ToString();
+			auto jsonArray = JsonArray::Parse(error);
+			auto jsonResponse = jsonArray->GetObjectAt(0);
+			auto jsonErrors = jsonResponse->GetNamedArray("errors");
+			auto jsonError = jsonErrors->GetObjectAt(0);
+			throw ref new Platform::FailureException(jsonError->Stringify());
+		}
+
+		// Default handling.
 		response->EnsureSuccessStatusCode();
+
 		return create_task(response->Content->ReadAsStringAsync());
 	}).then([=](String^ responseBodyAsText){
-		// Verify response.
-		auto responseString = std::wstring(responseBodyAsText->Data());
-
-		if (responseString.find(L"{\"status\":\"ok\"}") == std::string::npos)
-		{
-			auto message = L"Error sending analytics event: " + responseString;
-			auto messageString = ref new Platform::String(message.c_str());
-			throw ref new Platform::FailureException(messageString);
-		}
+		// Return response.
+		auto json = JsonObject::Parse(responseBodyAsText);
+		return json;
 	});
+}
+
+int GameAnalyticsInterface::GetStorageInt32OrDefault(Platform::String^ key) const
+{
+	auto localSettings = ApplicationData::Current->LocalSettings;
+	auto hasValue = localSettings->Values->HasKey(key);
+	return hasValue ? safe_cast<IPropertyValue^>(localSettings->Values->Lookup(key))->GetInt32() : 0;
+}
+
+void GameAnalyticsInterface::SetStorageInt32(Platform::String^ key, int value) const
+{
+	auto localSettings = ApplicationData::Current->LocalSettings;
+	localSettings->Values->Insert(key, dynamic_cast<PropertyValue^>(PropertyValue::CreateInt32(value)));
 }
