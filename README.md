@@ -62,7 +62,7 @@ Done! GameAnalytics is set up and ready for use. Sending a design event to the b
 
 Note that this method call is asynchronous. Calling this methods won't cause your app to block.
 
-You can send other events by calling the SendBusinessEvent, SendErrorEvent, SendProgressionEvent and SendResourceEvent methods.
+You can send other events by calling the SendBusinessEvent, SendErrorEvent, SendProgressionEvent and SendResourceEvent methods. There's also a [public Gist with more event examples](https://gist.github.com/npruehs/b27519e1f94ddcb86384).
 
 ### Session handling
 
