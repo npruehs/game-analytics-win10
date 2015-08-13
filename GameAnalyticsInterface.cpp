@@ -2,6 +2,7 @@
 
 #include "GameAnalyticsInterface.h"
 
+#include <Windows.h>
 
 using namespace GameAnalytics;
 
@@ -455,9 +456,8 @@ std::wstring GameAnalyticsInterface::GetManufacturer() const
 
 std::wstring GameAnalyticsInterface::GetOSVersion() const
 {
-	// TODO: Get correct OS version as soon as available in Windows Store app.
-	// https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9270b1d2-50c0-4fb7-b20d-07d0451c04cb/how-to-get-the-os-version-in-metro-style-app
-	return L"unknown";
+	auto deviceFamily = Windows::System::Profile::AnalyticsInfo::VersionInfo->DeviceFamily;
+	return (deviceFamily == "Windows.Desktop") ? L"windows 10" : L"windows_phone 10";
 }
 
 std::wstring GameAnalyticsInterface::GetPlatform() const
