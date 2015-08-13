@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <ppltasks.h>
 
 #include "GameAnalyticsErrorSeverity.h"
 #include "GameAnalyticsProgressionStatus.h"
