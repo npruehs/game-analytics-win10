@@ -6,7 +6,18 @@ This is an open-source library for integrating the free GameAnalytics (http://ww
 
 ### Enable network access for your app
 
-Open the package.appxmanifest file, and add the _Internet (Client & Server)_ capability for your Windows Phone app, or the _Internet (Client)_ capability for your Windows Store app.
+This is required for sending the analytics data to the GameAnalytics backend.
+
+Open the package.appxmanifest file, and add the _Internet (Client)_ capability.
+
+### Enable native mobile features
+
+In order to access useful analytics data, such as the platform the game is running on, we need to [add the correct Windows Universal Extension SDK](https://msdn.microsoft.com/en-us/library/windows/apps/dn705768.aspx#extension_sdks).
+
+* Right-click your project file.
+* Click Add > Reference...
+* Select Universal Windows > Extensions > Windows Mobile Extensions for the UWP.
+* Click OK.
 
 ### Import source code
 
@@ -38,7 +49,7 @@ It is also highly recommended to send a User event before sending any other even
 	ga->Init().then([this](JsonObject^ response)
 	{
 		this->ga->SendUserEvent(GameAnalytics::User());
-	}
+	});
 ```
 
 ### Send some data
@@ -55,11 +66,11 @@ You can send other events by calling the SendBusinessEvent, SendErrorEvent, Send
 
 ### Session handling
 
-You should propagate the [App lifecycle](https://msdn.microsoft.com/en-us/library/windows/apps/hh464925.aspx) Suspending and Resuming events to GameAnalytics by calling SendSessionEndEvent and SendUserEvent, respectively. 
+You should propagate the [App lifecycle](https://msdn.microsoft.com/en-us/library/windows/apps/xaml/mt243287.aspx) Suspending and Resuming events to GameAnalytics by calling SendSessionEndEvent and SendUserEvent, respectively. 
 
 ## Error Handling
 
-If any errors occur sending the event, a Platform::COMException will be thrown. This most likely indicates an invalid game or secret key. Double-check the keys in your dashboard, and ensure you're connected to the internet and the app is correctly set up to access the network.
+If any errors occur sending the event, a Platform::FailureException will be thrown, containing the error returned by the server. This most likely indicates an invalid game or secret key. Double-check the keys in your dashboard, and ensure you're connected to the internet and the app is correctly set up to access the network.
 
 ## Specifying User and Build IDs
 
